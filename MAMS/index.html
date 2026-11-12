@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mugen Animation Maker Studio</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<header id="top">
+  <strong class="brand">MAMS</strong>
+  <nav id="menubar" aria-label="Main menu"></nav>
+  <span class="sp"></span>
+  <input id="projName" title="Project name" value="Untitled" spellcheck="false">
+</header>
+
+<nav id="side">
+  <button data-tab="characters" title="Characters"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-5 3.5-8 8-8s8 3 8 8z"/></svg></button>
+  <button data-tab="abilities" title="Abilities"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+  <button data-tab="backgrounds" title="Backgrounds"><svg viewBox="0 0 24 24"><path d="M3 4h18v16H3zM5 18l5-6 3 4 2-2 4 4z"/></svg></button>
+</nav>
+
+<aside id="panel">
+  <div class="panel-head">
+    <h2 id="panelTitle">Characters</h2>
+    <button id="btnNone" title="Remove this layer from the current frame">None</button>
+    <button id="btnAdd" title="Import PNG">+</button>
+  </div>
+  <div id="grid"></div>
+</aside>
+
+<main>
+  <div id="toolbar">
+    <button id="play" title="Play (Space)">▶</button>
+    <button id="pause" title="Pause">❚❚</button>
+    <button id="stop" title="Stop">■</button>
+    <button id="loop" title="Loop" class="on">Loop</button>
+    <label title="Sets the duration of every frame">FPS <input id="fps" type="number" min="1" max="60" value="12"></label>
+    <span class="sp"></span>
+    <button id="zoomOut" title="Zoom out">−</button>
+    <span id="zoomLbl">100%</span>
+    <button id="zoomIn" title="Zoom in">+</button>
+    <button id="fit" title="Fit to screen">Fit</button>
+    <button id="clearFrame" title="Remove everything from this frame">Clear frame</button>
+  </div>
+  <div id="editbar">
+    <button id="onionBtn" title="Onion Skin (O): ghost of neighbouring frames. Editing aid only, never exported.">Onion Skin</button>
+    <label><input type="checkbox" id="onionPrev" checked> Previous</label>
+    <label><input type="checkbox" id="onionNext"> Next</label>
+    <label>Opacity <input type="range" id="onionAlpha" min="5" max="80" value="35"></label>
+    <span class="sep"></span>
+    <label title="How the background is placed in this frame">Background <select id="bgMode"></select></label>
+    <button id="resetXf" title="Reset size, position and rotation of the selected object">Reset transform</button>
+    <span id="selInfo"></span>
+    <span class="hint">Drag handles to resize · Shift = free stretch / snap rotation</span>
+  </div>
+  <div id="stageWrap"><div id="stageBox"><canvas id="stage" width="640" height="360"></canvas><canvas id="overlay"></canvas></div></div>
+  <div id="timeline">
+    <div id="tlBar">
+      <button id="prev" title="Previous frame (←)">‹</button>
+      <button id="next" title="Next frame (→)">›</button>
+      <button id="addFrame">Add frame</button>
+      <button id="dupFrame">Duplicate</button>
+      <button id="delFrame">Delete</button>
+      <label>Duration <input id="dur" type="number" min="10" max="10000" step="10"> ms</label>
+      <span class="hint">Drag frames to reorder</span>
+    </div>
+    <div id="strip"></div>
+  </div>
+</main>
+
+<aside id="tools" aria-label="Tools"></aside>
+
+<dialog id="exDlg">
+  <div class="ex">
+    <div class="ex-left">
+      <div class="ex-ctl">
+        <label>Method <select id="exMode"><option value="auto">Automatic</option><option value="grid">Grid</option><option value="manual">Manual rectangles</option></select></label>
+        <label>Threshold <input id="exThr" type="number" min="0" max="255" value="10"></label>
+        <label>Merge gap <input id="exGap" type="number" min="0" max="100" value="2"></label>
+        <label>Rows <input id="exRows" type="number" min="1" value="4"></label>
+        <label>Cols <input id="exCols" type="number" min="1" value="4"></label>
+        <button id="exRun">Detect</button>
+        <span id="exStatus"></span>
+      </div>
+      <div class="ex-sheet"><canvas id="exCanvas"></canvas></div>
+      <p class="hint">Automatic/Grid: click a box to keep or skip it. Manual: drag a rectangle to add a sprite.</p>
+    </div>
+    <div class="ex-right">
+      <div class="ex-ctl">
+        <strong id="exCount">0 sprites</strong>
+        <button id="exAll">All</button><button id="exNoneBtn">None</button>
+        <button id="exAllChar">Kept → Character</button><button id="exAllAbil">Kept → Ability</button>
+      </div>
+      <div id="exList"></div>
+      <div class="ex-ctl end"><button id="exCancel">Cancel</button><button id="exConfirm" class="primary">Add to library</button></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="projDlg">
+  <h3>Saved projects</h3>
+  <div id="projList"></div>
+  <div class="ex-ctl end"><button id="projClose">Close</button></div>
+</dialog>
+<div id="toast"></div>
+<input type="file" id="fileInput" accept="image/png" hidden>
+<input type="file" id="jsonInput" accept=".json,application/json" hidden>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
