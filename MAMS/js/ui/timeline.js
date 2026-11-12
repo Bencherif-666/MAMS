@@ -1,6 +1,7 @@
 import { state, newFrame, uid, currentFrame } from '../core/state.js';
 import { on, emit } from '../core/eventManager.js';
 import { renderFrame } from '../editor/canvasEditor.js';
+import * as layers from '../editor/drawingLayers.js';
 import { $, el, toast, confirmDialog } from '../utils/helpers.js';
 
 const frames = () => state.project.frames;
@@ -49,11 +50,11 @@ function mark() {
 export function initTimeline() {
   on('frames', build); on('stage', mark);
   $('#addFrame').onclick = () => insert(newFrame(defaultDuration()), state.current + 1);
-  $('#dupFrame').onclick = () => { const c = structuredClone(currentFrame()); c.id = uid('frame'); insert(c, state.current + 1); };
+  $('#dupFrame').onclick = () => { const src = currentFrame(), c = structuredClone(src); c.id = uid('frame'); c.draw = null; layers.duplicate(src.id, c.id); insert(c, state.current + 1); };
   $('#delFrame').onclick = () => {
     if (frames().length === 1) { toast('A project needs at least one frame. Use Clear frame instead.', true); return; }
     if (!confirmDialog(`Delete frame ${state.current + 1}?`)) return;
-    frames().splice(state.current, 1); state.current = Math.min(state.current, frames().length - 1); emit('frames');
+    layers.release(frames().splice(state.current, 1)[0].id); state.current = Math.min(state.current, frames().length - 1); emit('frames');
   };
   $('#prev').onclick = () => select(state.current - 1);
   $('#next').onclick = () => select(state.current + 1);

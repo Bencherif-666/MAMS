@@ -10,6 +10,10 @@
 <header id="top">
   <strong class="brand">MAMS</strong>
   <nav id="menubar" aria-label="Main menu"></nav>
+  <div id="histBtns">
+    <button id="btnUndo" title="Undo drawing (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button id="btnRedo" title="Redo drawing (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+  </div>
   <span class="sp"></span>
   <input id="projName" title="Project name" value="Untitled" spellcheck="false">
 </header>
@@ -43,17 +47,6 @@
     <button id="fit" title="Fit to screen">Fit</button>
     <button id="clearFrame" title="Remove everything from this frame">Clear frame</button>
   </div>
-  <div id="editbar">
-    <button id="onionBtn" title="Onion Skin (O): ghost of neighbouring frames. Editing aid only, never exported.">Onion Skin</button>
-    <label><input type="checkbox" id="onionPrev" checked> Previous</label>
-    <label><input type="checkbox" id="onionNext"> Next</label>
-    <label>Opacity <input type="range" id="onionAlpha" min="5" max="80" value="35"></label>
-    <span class="sep"></span>
-    <label title="How the background is placed in this frame">Background <select id="bgMode"></select></label>
-    <button id="resetXf" title="Reset size, position and rotation of the selected object">Reset transform</button>
-    <span id="selInfo"></span>
-    <span class="hint">Drag handles to resize · Shift = free stretch / snap rotation</span>
-  </div>
   <div id="stageWrap"><div id="stageBox"><canvas id="stage" width="640" height="360"></canvas><canvas id="overlay"></canvas></div></div>
   <div id="timeline">
     <div id="tlBar">
@@ -62,6 +55,25 @@
       <button id="addFrame">Add frame</button>
       <button id="dupFrame">Duplicate</button>
       <button id="delFrame">Delete</button>
+      <div class="popwrap">
+        <button id="onionBtn" title="Onion Skin settings (key O turns it on/off)">Onion</button>
+        <div class="popover" id="onionPop" hidden>
+          <label class="chk"><input type="checkbox" id="onionOn" checked> Onion skin on</label>
+          <label class="chk"><input type="checkbox" id="onionPrev" checked> Previous frame (red)</label>
+          <label class="chk"><input type="checkbox" id="onionNext"> Next frame (green)</label>
+          <label class="chk"><input type="checkbox" id="onionDraw" checked> Include drawings</label>
+          <label class="rng">Opacity <input type="range" id="onionAlpha" min="5" max="80" value="35"></label>
+        </div>
+      </div>
+      <div class="popwrap">
+        <button id="xfBtn" title="Size, rotation and background placement of the selected object">Transform</button>
+        <div class="popover" id="xfPop" hidden>
+          <div id="selInfo">Nothing selected</div>
+          <label class="rng">Background placement <select id="bgMode"></select></label>
+          <button id="resetXf" title="Reset size, position and rotation of the selected object">Reset transform</button>
+          <p class="hint">Drag handles to resize. Shift = free stretch / snap rotation.</p>
+        </div>
+      </div>
       <label>Duration <input id="dur" type="number" min="10" max="10000" step="10"> ms</label>
       <span class="hint">Drag frames to reorder</span>
     </div>
@@ -70,6 +82,15 @@
 </main>
 
 <aside id="tools" aria-label="Tools"></aside>
+<div id="flyout" hidden role="dialog" aria-label="Tool options">
+  <h4 id="flyTitle">Brush</h4>
+  <div class="grp" data-for="brush eraser ellipse blur"><label><span>Size</span><span><output id="outSize">12</output> px</span><input type="range" id="optSize" min="1" max="200" value="12"></label></div>
+  <div class="grp" data-for="brush eraser ellipse blur"><label><span id="lblOpacity">Opacity</span><span><output id="outOpacity">100</output> %</span><input type="range" id="optOpacity" min="1" max="100" value="100"></label></div>
+  <div class="grp" data-for="brush eraser blur"><label><span>Hardness</span><span><output id="outHardness">80</output> %</span><input type="range" id="optHardness" min="0" max="100" value="80"></label></div>
+  <div class="grp" data-for="brush ellipse"><div class="lab">Color</div><div class="colorrow"><input type="color" id="optColor" value="#ff5533"><input type="text" id="optHex" value="#ff5533" maxlength="7" spellcheck="false" title="HEX color, e.g. #ff5533"></div></div>
+  <div class="grp" data-for="ellipse"><div class="lab">Shape</div><select id="optFill"><option value="outline">Outline</option><option value="fill">Filled</option></select></div>
+  <p class="hint" id="toolHint"></p>
+</div>
 
 <dialog id="exDlg">
   <div class="ex">

@@ -11,7 +11,11 @@ import { initSelection, drawOverlay, deleteSelected, resetSelected, OVERLAY_MARG
 import { initPanels } from './ui/panels.js';
 import { initTimeline } from './ui/timeline.js';
 import { initMenus } from './ui/menus.js';
-import { initToolbox } from './ui/toolbox.js';
+import { initToolbox, setTool } from './ui/toolbox.js';
+import { initToolOptions } from './ui/toolOptions.js';
+import { initPopover } from './ui/popover.js';
+import * as layers from './editor/drawingLayers.js';
+import { initDrawing, drawToolPreview, undoDrawing, redoDrawing, clearDrawing } from './editor/drawingTools.js';
 import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js';
 
 const stage = $('#stage'), sctx = stage.getContext('2d');
@@ -29,22 +33,29 @@ function updateEditBar() {
   const f = currentFrame(), sel = state.sel;
   $('#bgMode').value = f.bgMode || 'auto';
   $('#onionBtn').classList.toggle('on', state.onion.on);
+  $('#onionOn').checked = state.onion.on;
+  $('#btnUndo').disabled = !layers.canUndo(); $('#btnRedo').disabled = !layers.canRedo();
   let info = 'Nothing selected';
   const e = sel && f[sel] && cache.get(f[sel]);
   if (e) { const t = getXf(state.project, f, sel, e.bmp); info = `${sel}: ${t.w}×${t.h}px, ${Math.round(t.rot)}°`; }
   $('#selInfo').textContent = info;
 }
 
+function drawOverlayLayer() {
+  drawOverlay(octx, overlay, state.zoom, player.playing);
+  drawToolPreview(octx, state.zoom, player.playing);
+}
+
 /** Onion ghosts and selection handles are drawn only while editing, never during playback. */
 function drawStage() {
   const p = state.project, o = state.onion, opts = {};
   if (!player.playing && o.on) {
-    opts.ghosts = []; opts.alpha = o.alpha;
+    opts.ghosts = []; opts.alpha = o.alpha; opts.drawings = o.drawings;
     if (o.prev && state.current > 0) opts.ghosts.push({ frame: p.frames[state.current - 1], tint: '#ff3b3b' });
     if (o.next && state.current < p.frames.length - 1) opts.ghosts.push({ frame: p.frames[state.current + 1], tint: '#35e06b' });
   }
   renderFrame(sctx, p, currentFrame(), opts);
-  drawOverlay(octx, overlay, state.zoom, player.playing);
+  drawOverlayLayer();
   updateEditBar();
 }
 
@@ -63,9 +74,10 @@ function fit() {
 }
 
 async function useProject(project) {
-  player.pause(); cache.clear();
+  player.pause(); cache.clear(); layers.clearAll();
   migrateProject(project); // upgrades projects saved by older versions
   await cache.loadAll(project);
+  await layers.loadAll(project); // per-frame drawings
   Object.assign(state, { project, current: 0, sel: null });
   stage.width = project.stage.w; stage.height = project.stage.h;
   overlay.width = project.stage.w + 2 * M; overlay.height = project.stage.h + 2 * M;
@@ -76,6 +88,7 @@ async function useProject(project) {
 
 on('stage', drawStage);
 on('frames', drawStage);
+on('tool', drawStage);
 on('pause', () => player.pause());
 
 // ---- commands: one implementation each, shared by the menus, toolbars and shortcuts
@@ -84,7 +97,7 @@ const toggleSide = (cls) => { document.body.classList.toggle(cls); requestAnimat
 const toggleOnion = () => { state.onion.on = !state.onion.on; drawStage(); };
 const commands = {
   newProject: async () => { if (confirmDialog('Start a new project? Unsaved changes will be lost.')) await useProject(newProject()); },
-  save: async () => { try { await db.saveProject(state.project); toast('Project saved.'); } catch (e) { toast(`Save failed: ${e.message}`, true); } },
+  save: async () => { try { await layers.flush(state.project); await db.saveProject(state.project); toast('Project saved.'); } catch (e) { toast(`Save failed: ${e.message}`, true); } },
   saveAs: async () => {
     const name = prompt('Save a copy as…', `${state.project.name} copy`);
     if (!name || !name.trim()) return;
@@ -104,7 +117,7 @@ const commands = {
     }
     $('#projDlg').showModal();
   },
-  exportJson: async () => downloadBlob(await exportProject(state.project), `${state.project.name}.mams.json`),
+  exportJson: async () => { await layers.flush(state.project); downloadBlob(await exportProject(state.project), `${state.project.name}.mams.json`); },
   importJson: () => $('#jsonInput').click(),
   pngFrame: async () => downloadBlob(await exportFrameBlob(state.project, currentFrame()), frameName(state.current)),
   pngSequence: async () => {
@@ -123,7 +136,7 @@ const commands = {
   },
   clearFrame: () => {
     if (!confirmDialog('Clear everything in this frame?')) return;
-    Object.assign(currentFrame(), { character: null, ability: null, background: null, xf: {} }); state.sel = null; emit('frames');
+    layers.clear(currentFrame().id); Object.assign(currentFrame(), { character: null, ability: null, background: null, xf: {} }); state.sel = null; emit('frames');
   },
 };
 
@@ -151,9 +164,14 @@ $('#jsonInput').onchange = async (e) => {
 
 // ---- edit bar: onion skin, background placement, reset
 for (const [value, label] of Object.entries(BG_MODES)) $('#bgMode').append(new Option(label, value));
-$('#onionBtn').onclick = toggleOnion;
+initPopover($('#onionBtn'), $('#onionPop'));
+initPopover($('#xfBtn'), $('#xfPop'));
+$('#onionOn').onchange = (e) => { state.onion.on = e.target.checked; drawStage(); };
+$('#btnUndo').onclick = undoDrawing;
+$('#btnRedo').onclick = redoDrawing;
 $('#onionPrev').onchange = (e) => { state.onion.prev = e.target.checked; drawStage(); };
 $('#onionNext').onchange = (e) => { state.onion.next = e.target.checked; drawStage(); };
+$('#onionDraw').onchange = (e) => { state.onion.drawings = e.target.checked; drawStage(); };
 $('#onionAlpha').oninput = (e) => { state.onion.alpha = +e.target.value / 100; drawStage(); };
 $('#bgMode').onchange = (e) => { const f = currentFrame(); f.bgMode = e.target.value; delete f.xf.background; emit('frames'); };
 $('#resetXf').onclick = resetSelected;
@@ -174,6 +192,10 @@ initMenus([
     { label: 'Export all frames (PNG sequence)', run: commands.pngSequence },
   ] },
   { label: 'Edit', items: [
+    { label: 'Undo drawing', key: 'Ctrl+Z', run: undoDrawing },
+    { label: 'Redo drawing', key: 'Ctrl+Y', run: redoDrawing },
+    { label: 'Clear drawing', run: clearDrawing },
+    '-',
     { label: 'Delete selected object', key: 'Del', run: deleteSelected },
     { label: 'Reset transform', run: resetSelected },
     '-',
@@ -203,11 +225,14 @@ initMenus([
 ]);
 
 // ---- keyboard shortcuts
+const TOOL_KEYS = { v: 'select', b: 'brush', e: 'eraser', c: 'ellipse', u: 'blur' };
 addEventListener('keydown', (e) => {
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
   if (mod && k === 's') { e.preventDefault(); commands.save(); return; }
   if (mod && k === 'o') { e.preventDefault(); commands.open(); return; }
   if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || $('dialog[open]')) return;
+  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redoDrawing() : undoDrawing(); return; }
+  if (mod && k === 'y') { e.preventDefault(); redoDrawing(); return; }
   if (mod && k === 'd') { e.preventDefault(); $('#dupFrame').click(); return; }
   if (mod) return;
   if (e.code === 'Space') { e.preventDefault(); commands.togglePlay(); }
@@ -216,13 +241,15 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Delete') deleteSelected();
   if (e.key === 'Escape') { state.sel = null; drawStage(); }
   if (k === 'o') toggleOnion();
+  if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
 });
 
 initSelection({ overlay, getZoom: () => state.zoom, redraw: drawStage, commit: () => emit('frames'), canEdit: () => !player.playing });
+initDrawing({ overlay, redraw: drawStage, redrawOverlay: drawOverlayLayer, commit: () => emit('frames'), canEdit: () => !player.playing });
 
 addEventListener('beforeunload', () => player.destroy());
 addEventListener('resize', () => { if (state.zoom) fit(); });
 
 state.project = newProject();
-initPanels(); initTimeline(); initToolbox();
+initPanels(); initTimeline(); initToolbox(); initToolOptions();
 useProject(state.project);

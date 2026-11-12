@@ -55,7 +55,7 @@ function hitBody(px, py) {
 
 export function drawOverlay(ctx, overlay, zoom, hidden) {
   ctx.clearRect(0, 0, overlay.width, overlay.height);
-  const o = !hidden && state.sel && objOf(state.sel);
+  const o = !hidden && state.tool === 'select' && state.sel && objOf(state.sel);
   if (!o) return;
   const { t } = o, s = 1 / zoom, hs = 8 * s, [cx, cy] = center(t);
   ctx.save(); ctx.translate(M + cx, M + cy); ctx.rotate(t.rot * RAD);
@@ -100,7 +100,7 @@ export function initSelection({ overlay, getZoom, redraw, commit, canEdit }) {
   overlay.onpointermove = (e) => {
     const [px, py] = pt(e);
     if (!drag) {
-      if (state.tool !== 'select' || !canEdit()) { overlay.style.cursor = 'default'; return; }
+      if (state.tool !== 'select' || !canEdit()) return;
       const cur = state.sel && objOf(state.sel), h = cur && hitHandle(cur.t, px, py, getZoom());
       overlay.style.cursor = h ? (h === 'rot' ? 'grab' : CURSOR[h]) : hitBody(px, py) ? 'move' : 'default';
       return;

@@ -39,6 +39,7 @@ export function migrateProject(p) {
   for (const f of p.frames) {
     if (!f.xf) { f.xf = {}; f.bgMode = 'stretch'; } // old projects always stretched backgrounds: keep that look
     f.bgMode ??= 'auto';
+    f.draw ??= null; // PNG blob of the frame's drawing layer
     if (f.pos) {
       for (const [k, [x, y]] of Object.entries(f.pos)) {
         const a = p.assets[f[k]];

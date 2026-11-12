@@ -53,3 +53,15 @@ Grid mode splits rows x cols and trims each cell. Manual mode: drag rectangles o
 - **Background placement** (per frame): Auto, Stretch to canvas, Original size, Cover. Auto: smaller than the canvas is stretched; bigger keeps its size and can slide sideways, and up/down only as far as it still covers the canvas (bottom aligned at start).
 - Old projects are upgraded automatically when opened (their backgrounds keep the old stretched look).
 Limitations: selection uses the object's rectangle (not pixel-exact); Onion Skin shows characters and abilities (drawing layers arrive in Step 3).
+
+## Step 3 additions
+- **Drawing tools** (right toolbox, keys V/B/E/C/U): Brush, Eraser, Circle/ellipse (Shift = circle), Blur. Options bar: size, opacity (strength for Blur), hardness (soft edge), color picker + HEX field, outline/filled shapes.
+- **Drawing layer per frame**: separate from sprites and backgrounds, stored in `frame.draw` as a PNG blob (IndexedDB and project .json). Included in playback, PNG export and (optionally) Onion Skin. The eraser and blur only touch this layer.
+- **Undo/Redo** (Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z, Edit menu): drawing operations, last 30 steps. Duplicating a frame copies its drawing; deleting a frame frees it.
+Limitations: no pen-pressure; blur needs a browser with canvas filters (Chrome, Edge, Brave, Firefox); every frame with a drawing keeps one canvas in memory (about 1 MB at 640×360).
+
+## Layout cleanup (after Step 3)
+- The two big option bars are gone: the canvas now has the whole centre of the window.
+- **Undo / Redo** arrows sit in the top bar, centred. "Clear drawing" is in the Edit menu.
+- **Tool options** (color, size, opacity, hardness, shape) open in a small box beside the toolbox when you click a tool. Click the same tool again to hide it (values are kept). It also closes when you click outside it.
+- **ONION** (timeline bar): popup with on/off, previous, next, include drawings and opacity. **TRANSFORM** (timeline bar): selected-object info, background placement, reset.

@@ -1,6 +1,7 @@
 import * as cache from '../assets/assetCache.js';
 import { canvasToBlob } from '../utils/helpers.js';
 import { getXf } from './transforms.js';
+import * as layers from './drawingLayers.js';
 
 export const LAYERS = ['character', 'ability']; // drawing order, bottom to top
 let ghostCanvas = null; // one reusable offscreen buffer for onion skin tinting
@@ -13,21 +14,23 @@ export function drawObject(ctx, bmp, t) {
   ctx.restore();
 }
 
-function drawLayers(ctx, project, frame) {
+function drawLayers(ctx, project, frame, withDrawing = true) {
   for (const kind of LAYERS) {
     const e = frame[kind] && cache.get(frame[kind]);
     if (e) drawObject(ctx, e.bmp, getXf(project, frame, kind, e.bmp));
   }
+  const dc = withDrawing && layers.getCanvas(frame.id); // the frame's own drawing layer, above the sprites
+  if (dc) ctx.drawImage(dc, 0, 0);
 }
 
 /** Tinted, translucent copy of another frame's sprites. Drawn on screen only. */
-function drawGhost(ctx, project, frame, tint, alpha) {
+function drawGhost(ctx, project, frame, tint, alpha, withDrawing) {
   const { w, h } = project.stage;
   ghostCanvas ??= document.createElement('canvas');
   if (ghostCanvas.width !== w || ghostCanvas.height !== h) { ghostCanvas.width = w; ghostCanvas.height = h; }
   const g = ghostCanvas.getContext('2d');
   g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h); g.imageSmoothingEnabled = false;
-  drawLayers(g, project, frame);
+  drawLayers(g, project, frame, withDrawing);
   g.globalCompositeOperation = 'source-atop'; g.fillStyle = tint; g.fillRect(0, 0, w, h);
   ctx.save(); ctx.globalAlpha = alpha; ctx.drawImage(ghostCanvas, 0, 0); ctx.restore();
 }
@@ -42,7 +45,7 @@ export function renderFrame(ctx, project, frame, opts = {}) {
   ctx.imageSmoothingEnabled = false;
   const bg = frame.background && cache.get(frame.background);
   if (bg) drawObject(ctx, bg.bmp, getXf(project, frame, 'background', bg.bmp));
-  for (const g of opts.ghosts || []) drawGhost(ctx, project, g.frame, g.tint, opts.alpha ?? 0.35);
+  for (const g of opts.ghosts || []) drawGhost(ctx, project, g.frame, g.tint, opts.alpha ?? 0.35, opts.drawings ?? true);
   drawLayers(ctx, project, frame);
 }
 
