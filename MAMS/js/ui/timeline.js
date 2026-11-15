@@ -1,8 +1,9 @@
-import { state, newFrame, uid, currentFrame } from '../core/state.js';
-import { on, emit } from '../core/eventManager.js';
-import { renderFrame } from '../editor/canvasEditor.js';
-import * as layers from '../editor/drawingLayers.js';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js';
+import { state, newFrame, uid, currentFrame } from '../core/state.js?v=6';
+import { on, emit } from '../core/eventManager.js?v=6';
+import { renderFrame } from '../editor/canvasEditor.js?v=6';
+import * as layers from '../editor/drawingLayers.js?v=6';
+import { snapshotOrders, restoreOrders } from '../editor/layerModel.js?v=6';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=6';
 
 const frames = () => state.project.frames;
 const defaultDuration = () => Math.round(1000 / state.project.fps);
@@ -31,8 +32,8 @@ function build() {
     box.ondrop = (e) => {
       e.preventDefault();
       if (dragFrom < 0 || dragFrom === i) return;
-      const selectedId = currentFrame().id, [m] = frames().splice(dragFrom, 1);
-      frames().splice(i, 0, m);
+      const selectedId = currentFrame().id, snap = snapshotOrders(state.project), [m] = frames().splice(dragFrom, 1);
+      frames().splice(i, 0, m); restoreOrders(state.project, snap);
       state.current = frames().findIndex((x) => x.id === selectedId);
       emit('frames');
     };
@@ -50,11 +51,11 @@ function mark() {
 export function initTimeline() {
   on('frames', build); on('stage', mark);
   $('#addFrame').onclick = () => insert(newFrame(defaultDuration()), state.current + 1);
-  $('#dupFrame').onclick = () => { const src = currentFrame(), c = structuredClone(src); c.id = uid('frame'); c.draw = null; layers.duplicate(src.id, c.id); insert(c, state.current + 1); };
+  $('#dupFrame').onclick = () => { const src = currentFrame(), c = structuredClone(src); c.id = uid('frame'); c.draws = {}; layers.duplicateFrame(src.id, c.id); insert(c, state.current + 1); };
   $('#delFrame').onclick = () => {
     if (frames().length === 1) { toast('A project needs at least one frame. Use Clear frame instead.', true); return; }
     if (!confirmDialog(`Delete frame ${state.current + 1}?`)) return;
-    layers.release(frames().splice(state.current, 1)[0].id); state.current = Math.min(state.current, frames().length - 1); emit('frames');
+    const snap = snapshotOrders(state.project); layers.release(frames().splice(state.current, 1)[0].id); restoreOrders(state.project, snap); state.current = Math.min(state.current, frames().length - 1); emit('frames');
   };
   $('#prev').onclick = () => select(state.current - 1);
   $('#next').onclick = () => select(state.current + 1);

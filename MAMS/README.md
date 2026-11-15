@@ -65,3 +65,25 @@ Limitations: no pen-pressure; blur needs a browser with canvas filters (Chrome, 
 - **Undo / Redo** arrows sit in the top bar, centred. "Clear drawing" is in the Edit menu.
 - **Tool options** (color, size, opacity, hardness, shape) open in a small box beside the toolbox when you click a tool. Click the same tool again to hide it (values are kept). It also closes when you click outside it.
 - **ONION** (timeline bar): popup with on/off, previous, next, include drawings and opacity. **TRANSFORM** (timeline bar): selected-object info, background placement, reset.
+
+## Layers (Step 4)
+- **Layers** button (vertical, under the toolbox; key L) opens a panel that docks beside the toolbox. Rectangles run from top (in front) to bottom (behind). Drag a rectangle to change the order.
+- Layers: Background, Character, Ability and any number of **drawing layers** (+ Layer). Each has an eye (hide/show, also in playback and export) and a name (double-click). Drawing layers can be duplicated and deleted (at least one stays).
+- The **active drawing layer** (highlighted) is where Brush, Eraser, Ellipse and Blur paint. Clicking a sprite layer selects that object on the canvas.
+- **Order carries forward**: a reorder at frame N applies to frame N and the frames after it, until a later frame changes it again. Deleting or moving frames keeps every remaining frame's look.
+- Older projects are upgraded automatically (their single drawing becomes "Drawing 1").
+
+## Layers panel, version 5
+- The **Layers** button (vertical, in the right toolbox, key L) shows or hides a floating panel. The canvas keeps its full size.
+- The panel has **+ New layer** (the new layer goes in front, on top) and the layers below it, top = in front. A new project has only the **Default layer** (background, character, ability).
+- Drawing never goes on the default layer: the first stroke creates its own layer. Drag layers up or down to change what covers what.
+
+## If the app looks broken after an update
+Delete the whole old `MAMS` folder first, copy the new one in (keep the hidden `.htaccess` file), then press Ctrl+Shift+R. The title bar shows the version ("MAMS v5"); if it is missing, the browser is still using old files. In the browser's developer tools (F12 > Network) you can tick "Disable cache" while testing.
+
+## Layers are containers (version 6)
+- A layer holds **sprites** (characters, abilities, backgrounds, as many as you like) and a **drawing**. The drawing is in front of that layer's sprites.
+- The **selected layer** (highlighted) receives: assets you click in the asset panel, and brush / eraser / ellipse / blur strokes. Clicking an object on the canvas selects its layer. Clicking a layer's rectangle selects it.
+- The **Default layer** is an ordinary layer: hide, rename, reorder, delete it. A project always keeps at least one layer.
+- **Transform** popup: move the selected sprite to another layer, change a background's placement, reset, delete. **Alt+click** an asset replaces the selected sprite (same place and scale).
+- Old projects open with their background, character and ability together in the Default layer.

@@ -1,7 +1,7 @@
 // Characters, abilities and backgrounds are one library filtered by `kind`.
-import { state, uid } from '../core/state.js';
-import { isPng } from '../utils/helpers.js';
-import * as cache from './assetCache.js';
+import { state, uid } from '../core/state.js?v=6';
+import { isPng } from '../utils/helpers.js?v=6';
+import * as cache from './assetCache.js?v=6';
 
 export const listAssets = (kind) => Object.values(state.project.assets).filter((a) => a.kind === kind);
 
@@ -12,9 +12,7 @@ export async function addAsset(asset) {
 
 export function removeAsset(id) {
   delete state.project.assets[id];
-  for (const f of state.project.frames) {
-    for (const k of ['character', 'ability', 'background']) if (f[k] === id) { f[k] = null; delete f.xf[k]; }
-  }
+  for (const f of state.project.frames) f.objects = f.objects.filter((o) => o.asset !== id);
   cache.release(id);
 }
 

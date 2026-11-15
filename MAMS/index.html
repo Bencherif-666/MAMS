@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mugen Animation Maker Studio</title>
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/main.css?v=6">
 </head>
 <body>
 <header id="top">
-  <strong class="brand">MAMS</strong>
+  <strong class="brand" title="Version 6: layers hold sprites and drawings">MAMS <small>v6</small></strong>
   <nav id="menubar" aria-label="Main menu"></nav>
   <div id="histBtns">
     <button id="btnUndo" title="Undo drawing (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -27,7 +27,6 @@
 <aside id="panel">
   <div class="panel-head">
     <h2 id="panelTitle">Characters</h2>
-    <button id="btnNone" title="Remove this layer from the current frame">None</button>
     <button id="btnAdd" title="Import PNG">+</button>
   </div>
   <div id="grid"></div>
@@ -69,9 +68,10 @@
         <button id="xfBtn" title="Size, rotation and background placement of the selected object">Transform</button>
         <div class="popover" id="xfPop" hidden>
           <div id="selInfo">Nothing selected</div>
+          <label class="rng">Move to layer <select id="moveLayer"></select></label>
           <label class="rng">Background placement <select id="bgMode"></select></label>
-          <button id="resetXf" title="Reset size, position and rotation of the selected object">Reset transform</button>
-          <p class="hint">Drag handles to resize. Shift = free stretch / snap rotation.</p>
+          <div class="row2"><button id="resetXf" title="Reset size, position and rotation of the selected object">Reset transform</button><button id="delObj" title="Remove the selected object from this frame (Del)">Delete object</button></div>
+          <p class="hint">Click an asset to add it to the selected layer. Alt+click replaces the selected sprite.</p>
         </div>
       </div>
       <label>Duration <input id="dur" type="number" min="10" max="10000" step="10"> ms</label>
@@ -81,6 +81,11 @@
   </div>
 </main>
 
+<aside id="layers" aria-label="Layers">
+  <button id="layAdd" class="lay-add" title="New layer, in front of all others">+ New layer</button>
+  <div id="layList"></div>
+  <p class="hint" id="layNote"></p>
+</aside>
 <aside id="tools" aria-label="Tools"></aside>
 <div id="flyout" hidden role="dialog" aria-label="Tool options">
   <h4 id="flyTitle">Brush</h4>
@@ -127,6 +132,6 @@
 <div id="toast"></div>
 <input type="file" id="fileInput" accept="image/png" hidden>
 <input type="file" id="jsonInput" accept=".json,application/json" hidden>
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>

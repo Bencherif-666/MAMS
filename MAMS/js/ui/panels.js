@@ -1,9 +1,11 @@
-import { state, currentFrame } from '../core/state.js';
-import { on, emit } from '../core/eventManager.js';
-import { listAssets, removeAsset, addBackground } from '../assets/assetLibrary.js';
-import * as cache from '../assets/assetCache.js';
-import { openExtraction } from './extraction.js';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js';
+// Asset panel (characters, abilities, backgrounds). Clicking an asset puts it on the SELECTED layer.
+import { state } from '../core/state.js?v=6';
+import { on, emit } from '../core/eventManager.js?v=6';
+import { listAssets, removeAsset, addBackground } from '../assets/assetLibrary.js?v=6';
+import * as cache from '../assets/assetCache.js?v=6';
+import { addObject, replaceAsset, findObject } from '../editor/objects.js?v=6';
+import { openExtraction } from './extraction.js?v=6';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=6';
 
 const KIND = { characters: 'character', abilities: 'ability', backgrounds: 'background' };
 const TITLE = { characters: 'Characters', abilities: 'Abilities', backgrounds: 'Backgrounds' };
@@ -21,16 +23,16 @@ async function handleFiles(files) {
 }
 
 function build() {
-  const kind = KIND[state.tab], grid = $('#grid');
+  const kind = KIND[state.tab], grid = $('#grid'), sel = findObject(state.sel);
   $('#panelTitle').textContent = TITLE[state.tab];
   $('#btnAdd').title = state.tab === 'backgrounds' ? 'Import background PNG' : 'Import sprite sheet PNG';
   document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === state.tab));
   grid.replaceChildren();
-  const items = listAssets(kind), used = currentFrame()[kind];
+  const items = listAssets(kind);
   if (!items.length) grid.append(el('div', 'empty', EMPTY[state.tab]));
   for (const a of items) {
-    const card = el('div', `card${a.id === used ? ' used' : ''}`);
-    card.title = `${a.name} (${a.w}×${a.h}) — click to use in this frame, double-click name to rename`;
+    const card = el('div', `card${sel && sel.asset === a.id ? ' used' : ''}`);
+    card.title = `${a.name} (${a.w}×${a.h}) — click: add to the selected layer · Alt+click: replace the selected sprite · double-click name: rename`;
     const thumb = el('div', 'thumb'), img = el('img');
     img.src = cache.get(a.id).url; img.alt = a.name; thumb.append(img);
     const name = el('div', 'name', a.name);
@@ -42,27 +44,23 @@ function build() {
     const x = el('button', 'x', '×'); x.title = 'Delete from project';
     x.onclick = (e) => {
       e.stopPropagation();
-      if (!confirmDialog(`Delete "${a.name}"? Frames using it will lose this layer.`)) return;
+      if (!confirmDialog(`Delete "${a.name}"? Frames using it will lose it.`)) return;
       removeAsset(a.id); emit('assets'); emit('frames');
     };
-    card.onclick = () => { const f = currentFrame(); f[kind] = a.id; delete f.xf[kind]; build(); emit('frames'); };
+    card.onclick = (e) => { const cur = findObject(state.sel); if (e.altKey && cur) replaceAsset(cur, a); else addObject(a); };
     card.append(thumb, name, x);
     grid.append(card);
   }
 }
 
 export function initPanels() {
-  on('assets', build); on('tab', build); on('frames', build);
+  on('assets', build); on('tab', build); on('frames', build); on('select', build);
   document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { state.tab = b.dataset.tab; emit('tab'); }));
   $('#btnAdd').onclick = () => { $('#fileInput').multiple = state.tab === 'backgrounds'; $('#fileInput').click(); };
   $('#fileInput').onchange = (e) => { const f = [...e.target.files]; e.target.value = ''; if (f.length) handleFiles(f); };
-  $('#btnNone').onclick = () => {
-    const f = currentFrame(), kind = KIND[state.tab];
-    f[kind] = null; delete f.xf[kind]; emit('frames');
-  };
-  const grid = $('#panel');
-  grid.ondragover = (e) => { e.preventDefault(); $('#grid').classList.add('drop'); };
-  grid.ondragleave = () => $('#grid').classList.remove('drop');
-  grid.ondrop = (e) => { e.preventDefault(); $('#grid').classList.remove('drop'); if (e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); };
+  const panel = $('#panel');
+  panel.ondragover = (e) => { e.preventDefault(); $('#grid').classList.add('drop'); };
+  panel.ondragleave = () => $('#grid').classList.remove('drop');
+  panel.ondrop = (e) => { e.preventDefault(); $('#grid').classList.remove('drop'); if (e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); };
   build();
 }

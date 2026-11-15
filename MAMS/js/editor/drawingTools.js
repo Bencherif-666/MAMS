@@ -1,9 +1,10 @@
-// Brush, eraser, ellipse and blur. All of them paint on the current frame's drawing layer only.
-import { state, currentFrame } from '../core/state.js';
-import { emit, on } from '../core/eventManager.js';
-import * as layers from './drawingLayers.js';
-import { OVERLAY_MARGIN as M } from './selection.js';
-import { toast } from '../utils/helpers.js';
+// Brush, eraser, ellipse and blur. They paint on the ACTIVE drawing layer of the current frame, never on sprites.
+import { state, currentFrame } from '../core/state.js?v=6';
+import { emit, on } from '../core/eventManager.js?v=6';
+import * as layers from './drawingLayers.js?v=6';
+import { layerById } from './layerModel.js?v=6';
+import { OVERLAY_MARGIN as M } from './selection.js?v=6';
+import { toast } from '../utils/helpers.js?v=6';
 
 export const settings = { color: '#ff5533', size: 12, opacity: 1, hardness: 80, fill: 'outline' };
 export const DRAW_TOOLS = ['brush', 'eraser', 'ellipse', 'blur'];
@@ -50,10 +51,7 @@ function dab(p) {
   } else if (t === 'blur') blurDab(p);
 }
 
-/**
- * One blur step: blur a copy of the area under the brush, then blend it back using the brush tip as a soft mask:
- * result = original * (1 - m) + blurred * m. Works on the drawing layer only.
- */
+/** One blur step, blended back through the brush tip: result = original * (1 - m) + blurred * m. */
 function blurDab(p) {
   const { size, opacity } = settings, px = Math.max(1, size / 8), pad = Math.ceil(px * 3), d = Math.ceil(size) + 2 * pad;
   const x0 = Math.round(p.x - d / 2), y0 = Math.round(p.y - d / 2), img = getTip('#000000'), off = (d - img.width) / 2;
@@ -78,45 +76,48 @@ function paintEllipse(g, a, b, circle) {
   else { g.strokeStyle = settings.color; g.lineWidth = settings.size; g.stroke(); }
 }
 
-/** Live preview on the overlay (editing aid, not part of the frame): current stroke + brush-size circle. */
+/** The stroke being painted (brush/ellipse); the renderer shows it inside its own layer so layer order stays correct. */
+export const getLiveStroke = () => (stroke && (stroke.tool === 'brush' || stroke.tool === 'ellipse')
+  ? { frameId: stroke.frameId, layerId: stroke.layerId, canvas: strokeCanvas, alpha: settings.opacity } : null);
+
+/** Brush-size circle that follows the pointer (overlay only, not part of the frame). */
 export function drawToolPreview(ctx, zoom, hidden) {
-  if (hidden || !DRAW_TOOLS.includes(state.tool)) return;
-  ctx.save(); ctx.translate(M, M);
-  if (stroke) {
-    ctx.globalAlpha = settings.opacity;
-    if (stroke.tool === 'brush') ctx.drawImage(strokeCanvas, 0, 0);
-    else if (stroke.tool === 'ellipse') paintEllipse(ctx, stroke.start, stroke.cur, stroke.shift);
-    ctx.globalAlpha = 1;
-  }
-  if (hover && state.tool !== 'ellipse') {
-    const r = settings.size / 2, s = 1 / zoom;
-    ctx.lineWidth = s; ctx.strokeStyle = '#000'; ctx.beginPath(); ctx.arc(hover.x, hover.y, r + s, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(hover.x, hover.y, r, 0, Math.PI * 2); ctx.stroke();
-  }
+  if (hidden || !hover || !DRAW_TOOLS.includes(state.tool) || state.tool === 'ellipse') return;
+  const r = settings.size / 2, s = 1 / zoom;
+  ctx.save(); ctx.translate(M, M); ctx.lineWidth = s;
+  ctx.strokeStyle = '#000'; ctx.beginPath(); ctx.arc(hover.x, hover.y, r + s, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(hover.x, hover.y, r, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 }
 
-function afterHistory(id, what) {
-  if (!id) { toast(`Nothing to ${what}.`); return; }
-  const i = state.project.frames.findIndex((f) => f.id === id);
+function afterHistory(entry, what) {
+  if (!entry) { toast(`Nothing to ${what}.`); return; }
+  const i = state.project.frames.findIndex((f) => f.id === entry.frameId);
   if (i >= 0) state.current = i;
+  if (layerById(state.project, entry.layerId)) state.activeLayer = entry.layerId;
   emit('frames');
 }
 export const undoDrawing = () => afterHistory(layers.undoDraw(), 'undo');
 export const redoDrawing = () => afterHistory(layers.redoDraw(), 'redo');
-export function clearDrawing() { layers.clear(currentFrame().id); emit('frames'); }
+export function clearDrawing() {
+  if (!layerById(state.project, state.activeLayer)) return;
+  layers.clear(currentFrame().id, state.activeLayer); emit('frames');
+}
 
 export function initDrawing({ overlay, redraw, redrawOverlay, commit, canEdit }) {
   const pt = (e) => { const r = overlay.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * overlay.width - M, y: (e.clientY - r.top) / r.height * overlay.height - M }; };
   const active = () => DRAW_TOOLS.includes(state.tool) && canEdit();
-  const refresh = () => (stroke && (stroke.tool === 'eraser' || stroke.tool === 'blur') ? redraw() : redrawOverlay());
+  const refresh = () => (stroke ? redraw() : redrawOverlay());
 
   overlay.addEventListener('pointerdown', (e) => {
     if (!active() || e.button !== 0) return;
     if (state.tool === 'blur' && !FILTER_OK) { toast('Blur needs Chrome, Edge, Brave or Firefox.', true); return; }
+    const L = layerById(state.project, state.activeLayer);
+    if (!L) { toast('Select a layer in the Layers panel first.', true); return; }
+    if (!L.visible) { toast(`"${L.name}" is hidden. Click its eye icon to show it.`, true); return; }
     const f = currentFrame(), p = pt(e), { w, h } = state.project.stage;
-    layers.pushUndo(f.id);
-    stroke = { tool: state.tool, frameId: f.id, dc: layers.ensure(f.id), last: p, smooth: p, raw: p, start: p, cur: p, carry: 0, shift: e.shiftKey };
+    layers.pushUndo(f.id, L.id);
+    stroke = { tool: state.tool, frameId: f.id, layerId: L.id, dc: layers.ensure(f.id, L.id), last: p, smooth: p, raw: p, start: p, cur: p, carry: 0, shift: e.shiftKey };
     if (strokeCanvas.width !== w || strokeCanvas.height !== h) { strokeCanvas.width = w; strokeCanvas.height = h; }
     else strokeCanvas.getContext('2d').clearRect(0, 0, w, h);
     overlay.setPointerCapture(e.pointerId);
@@ -137,6 +138,7 @@ export function initDrawing({ overlay, redraw, redrawOverlay, commit, canEdit })
       walk(stroke.last, stroke.smooth, dab);
       stroke.last = stroke.smooth;
     }
+    if (stroke.tool === 'ellipse') { const g = strokeCanvas.getContext('2d'); g.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height); paintEllipse(g, stroke.start, stroke.cur, stroke.shift); }
     refresh();
   });
 
@@ -144,9 +146,11 @@ export function initDrawing({ overlay, redraw, redrawOverlay, commit, canEdit })
     if (!stroke) return;
     const s = stroke, g = s.dc.getContext('2d');
     if (s.tool !== 'ellipse') walk(s.last, s.raw, dab); // reach the exact end point
-    if (s.tool === 'brush') { g.save(); g.globalAlpha = settings.opacity; g.drawImage(strokeCanvas, 0, 0); g.restore(); strokeCanvas.getContext('2d').clearRect(0, 0, strokeCanvas.width, strokeCanvas.height); }
-    else if (s.tool === 'ellipse') { g.save(); g.globalAlpha = settings.opacity; paintEllipse(g, s.start, s.cur, s.shift); g.restore(); }
-    layers.markDirty(s.frameId);
+    if (s.tool === 'brush' || s.tool === 'ellipse') {   // merge the stroke into the layer with the chosen opacity
+      g.save(); g.globalAlpha = settings.opacity; g.drawImage(strokeCanvas, 0, 0); g.restore();
+      strokeCanvas.getContext('2d').clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
+    }
+    layers.markDirty(s.frameId, s.layerId);
     stroke = null; commit();
   };
   overlay.addEventListener('pointerup', finish);

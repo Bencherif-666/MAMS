@@ -1,0 +1,231 @@
+================================================================================
+MAMS (MUGEN ANIMATION MAKER STUDIO) - COMPLETE CODEBASE ARCHITECTURE
+& REFACTOR PROMPT FOR CLAUDE
+================================================================================
+
+Below is a complete, detailed prompt designed to be copied and pasted directly into Claude (or any advanced AI chat assistant). It explains everything about how the MAMS project works so far, breaks down the responsibilities of every module, identifies the layer architectural problem, and provides exact, step-by-step instructions to refactor the layers into generic containers for Characters, Abilities, Backgrounds, and Drawings.
+
+--------------------------------------------------------------------------------
+START OF PROMPT TO CLAUDE
+--------------------------------------------------------------------------------
+
+You are an expert senior frontend engineer and software architect specializing in Vanilla JavaScript (ES modules), HTML5 Canvas 2D graphics, offline web applications, and game/animation tooling.
+
+I have a project called MAMS (Mugen Animation Maker Studio). Below is an exhaustive explanation of what this project is, how every part currently functions, and a specific refactoring task to solve the "Layers Problem" so that layers become flexible containers for multiple Characters, Abilities, Backgrounds, and Drawings, rather than restricting layers solely to drawings and a single rigid "Default layer".
+
+Please read this documentation carefully before writing code or proposing changes.
+
+================================================================================
+PART 1: WHAT THIS PROJECT IS (SIMPLY)
+================================================================================
+
+MAMS (Mugen Animation Maker Studio) is an offline, client-side 2D sprite animation editor tailored for Mugen and 2D fighting game creators, pixel artists, and animators.
+- Tech Stack: Pure Vanilla JavaScript with ES modules (ESM), HTML5 Canvas 2D API, IndexedDB for local offline storage, and modern CSS. There is ZERO backend, NO npm build step, and NO external libraries or frameworks (no React, no PixiJS, no Fabric.js, etc.).
+- Execution: Served over simple HTTP (e.g., `python -m http.server 8000` or local web server) because ES modules require HTTP/HTTPS origin policies.
+- Core Purpose:
+  1. Sprite Sheet Ingestion: Import raw PNG sprite sheets, automatically or manually detect and extract individual sprites (with alpha keying/background color removal), and categorize them into a project asset library (Characters, Abilities, Backgrounds).
+  2. Frame-by-Frame Animation: Assemble animations on a fixed 640x360 stage canvas. Users adjust frame durations, loop settings, and target FPS.
+  3. Canvas Editing & Transforms: Select, translate, scale (proportional with Shift for free stretch), and rotate (with 15-degree Shift snapping) sprites directly on the canvas using interactive bounding box handles. Backgrounds feature multiple fitting modes (Auto, Stretch, Original size, Cover).
+  4. Drawing Tools: In-canvas painting with Brush, Eraser, Circle/Ellipse, and Blur tools with adjustable size, opacity, hardness, and color, backed by a 30-step pixel-level Undo/Redo system.
+  5. Onion Skinning: Live visual aid displaying previous frames (red tint) and next frames (green tint) with adjustable opacity on the editing canvas (never appearing in playback or exports).
+  6. Persistence & Export: Save/Open projects locally via IndexedDB, export/import entire projects as self-contained `.mams.json` files (metadata + Base64 PNG data URLs), and export single PNG frames or full numbered PNG image sequences.
+
+================================================================================
+PART 2: WHICH PART DOES WHAT (CODEBASE ARCHITECTURE)
+================================================================================
+
+The codebase follows a modular, event-driven architecture organized under `/js`. Here is the exact breakdown of every directory and file:
+
+1. Entry Point & Markup:
+   - `index.html`: Defines the application layout grid (header with menubar and undo/redo; left asset sidebar with tab buttons; asset grid panel; center workspace with canvas stage, controls, and bottom timeline; floating layers panel; right toolbox; tool options flyout; sprite extraction modal dialog; and project manager dialog).
+   - `css/main.css`: Dark-themed UI stylesheet using CSS grid and flexbox. Manages visibility toggles (`body.layers-open`, `body.no-left`, `body.no-right`), modals, tooltips, and canvas overlays.
+   - `js/app.js`: Central controller and bootstrap script. Initializes all UI subsystems, binds global keyboard shortcuts (Ctrl+S, Ctrl+O, Ctrl+Z, Ctrl+Y, Space, Arrow keys, V, B, E, C, U, L, O), orchestrates canvas rendering loops, coordinates AnimationPlayer, and manages file imports/exports.
+
+2. Core State & Data Management (`js/core/`):
+   - `js/core/state.js`:
+     * Holds the global singleton `state` object:
+       - `state.project`: Current loaded project data.
+       - `state.current`: Zero-based index of the active frame in `project.frames`.
+       - `state.tab`: Active sidebar tab (`'characters'`, `'abilities'`, `'backgrounds'`).
+       - `state.zoom`: Canvas zoom level (0.1x to 8x).
+       - `state.tool`: Active tool (`'select'`, `'brush'`, `'eraser'`, `'ellipse'`, `'blur'`).
+       - `state.sel`: Selected element on canvas.
+       - `state.activeDraw`: ID of the currently active drawing layer.
+       - `state.onion`: Onion skin config (`{ on, prev, next, alpha, drawings }`).
+     * `newProject(name)`: Factory generating default project structure (`{ id, version: 3, name, fps: 12, loop: true, stage: { w: 640, h: 360 }, assets: {}, layers: [...], baseOrder: [...], frames: [...] }`).
+     * `newFrame(duration)`: Factory generating a new frame.
+     * `currentFrame()`: Helper returning `state.project.frames[state.current]`.
+   - `js/core/eventManager.js`:
+     * Minimal Pub/Sub event bus (`emit(name, payload)`, `on(name, fn)`).
+     * Events used throughout the app: `'stage'` (redraw canvas), `'frames'` (timeline/layer update), `'assets'` (library update), `'tab'` (sidebar switch), `'tool'` (tool switch), `'layout'` (resize canvas fit), `'pause'` (stop playback).
+   - `js/core/projectManager.js`:
+     * `exportProject(project)`: Serializes project to a JSON Blob format `mams-1`. Converts asset Blobs and per-frame drawing layer Blobs into Base64 Data URLs.
+     * `importProject(file)`: Parses `.mams.json`, reconstructs PNG Blobs from Data URLs, initializes layer structures, and returns project object.
+
+3. Local Storage (`js/storage/`):
+   - `js/storage/database.js`:
+     * IndexedDB wrapper for database `'mams'` (object store `'projects'`, keyPath `'id'`).
+     * Methods: `saveProject(p)`, `getProject(id)`, `deleteProject(id)`, `listProjects()`. Projects are saved directly as structured clones including PNG Blobs.
+
+4. Sprite Sheet Import & Extraction (`js/import/`):
+   - `js/import/spriteDetector.js`:
+     * Analyzes image pixel data (`ImageData`) to detect individual sprites.
+     * `detectAuto(imageData, { threshold, gap })`: Uses 8-connected flood fill to find contiguous opaque/non-background pixel regions, bounds them, merges bounding boxes closer than `gap`, filters out noise, and orders them top-to-bottom / left-to-right.
+     * `detectGrid(imageData, rows, cols, threshold)`: Splits sheet into uniform grid cells and trims transparent borders around each cell.
+     * `getBackgroundKey(imageData, threshold)`: Inspects top-left pixel to determine if sheet has a solid background key color to treat as transparent.
+   - `js/import/spriteCutter.js`:
+     * `cutSprite(bmp, rect, bgKey)`: Cuts the sub-rectangle from sheet `ImageBitmap` onto an offscreen canvas, replaces background key pixels with transparent pixels (alpha 0), and converts canvas to PNG Blob.
+   - `js/ui/extraction.js`:
+     * Modal dialog (`#exDlg`) workflow: shows full sheet on zoomable canvas, executes detection (Auto, Grid, Manual drag-box), allows toggling keep/skip per sprite, bulk classification (`Character` vs `Ability`), renaming, and imports selected sprites into `assetLibrary`.
+
+5. Asset Management (`js/assets/`):
+   - `js/assets/assetLibrary.js`:
+     * Stores assets in `project.assets[id]` with metadata: `{ id, name, kind: 'character'|'ability'|'background', w, h, blob }`.
+     * `listAssets(kind)`: Returns assets matching given category.
+     * `addAsset(asset)`: Caches bitmap and adds to project.
+     * `removeAsset(id)`: Removes asset and unlinks it from frames using it.
+     * `addBackground(file)`: Ingests standalone background PNG file directly.
+   - `js/assets/assetCache.js`:
+     * In-memory cache holding decoded `ImageBitmap` objects and Object URLs (`URL.createObjectURL(blob)`) for instantaneous synchronous canvas rendering without decoding overhead during playback.
+
+6. Canvas Editor & Rendering Pipeline (`js/editor/`):
+   - `js/editor/canvasEditor.js`:
+     * `renderFrame(ctx, project, frame, opts)`: Core rendering loop. Clears stage (640x360), retrieves layer stack from `effectiveOrder()`, renders layers from bottom (behind) to top (in front). Renders onion skin ghost layers between background and foreground if enabled.
+     * `drawScene(...)`: Renders background, character, and ability.
+     * `drawLayer(...)`: Renders specific drawing layer canvas, plus live in-progress stroke if user is actively drawing.
+     * `drawGhost(...)`: Renders onion skin ghost frame tinted red or green.
+     * `exportFrameBlob(project, frame)`: Renders clean frame (no overlay handles, no onion skin) to offscreen canvas and returns PNG Blob.
+   - `js/editor/transforms.js`:
+     * Stores per-frame transforms in `frame.xf[target] = { x, y, w, h, rot }`. Original asset images are never modified.
+     * `defaultXf(...)`: Computes initial placement (characters/abilities centered at bottom; backgrounds placed according to `bgMode`: auto, stretch, original, cover).
+     * `getXf(...)`: Retrieves stored transform or falls back to default.
+     * `ensureXf(...)`: Lazily instantiates stored transform object on first edit.
+     * `clampBackground(...)`: Constrains tall background sliding so canvas is never exposed.
+     * `migrateProject(p)`: Upgrades legacy saved project formats to current schema.
+   - `js/editor/selection.js`:
+     * Interactive overlay canvas (`#overlay`) sitting directly over `#stage`.
+     * Computes 8 resize handles (nw, n, ne, e, se, s, sw, w) and rotation handle.
+     * `hitBody(px, py)`: Determines which object on canvas was clicked.
+     * `resizeTransform(start, handleId, px, py, lockRatio)`: Handles mathematical resizing preserving aspect ratio (or free stretching when Shift is held).
+     * Handles rotation angle calculation (with 15-degree snapping when Shift is held).
+   - `js/editor/animationPlayer.js`:
+     * High-precision animation playback controller using a single `requestAnimationFrame` loop.
+     * Accumulates delta time (`performance.now()`) against individual frame durations (`frame.duration`), advances frames, handles looping, and pauses cleanly.
+
+7. Drawing Tools & Layers (`js/editor/` & `js/ui/`):
+   - `js/editor/drawingLayers.js`:
+     * Holds offscreen `HTMLCanvasElement` instances per `(frameId, layerId)`.
+     * Lazily creates canvases on demand.
+     * Owns 30-step pixel snapshot Undo/Redo history stacks (`undoStack`, `redoStack`).
+     * `flush(project)`: Converts dirty canvases into PNG Blobs stored into `frame.draws[layerId]` before saving or exporting.
+   - `js/editor/drawingTools.js`:
+     * Tool settings: `{ color: '#ff5533', size: 12, opacity: 1, hardness: 80, fill: 'outline' }`.
+     * Pre-renders brush tips (`getTip`) with radial gradients for soft hardness.
+     * Implements Bresenham/interpolation segment walking (`walk`) for smooth, gap-free strokes.
+     * Implements `brush`, `eraser` (`destination-out`), `ellipse` (circle with Shift), and `blur` (using HTML5 2D canvas `ctx.filter = 'blur(...)'`).
+   - `js/editor/layerModel.js`:
+     * Manages `project.layers = [{ id, name, type, visible }]`.
+     * Manages layer order stack `effectiveOrder(project, frameIndex)`: Order is stored in `frame.order` only when changed on that frame, otherwise inherited from preceding frames (`orderSource`).
+   - `js/editor/layerActions.js`:
+     * Adds, duplicates, and deletes drawing layers.
+   - `js/ui/layersPanel.js`:
+     * Floating panel (`#layers`) toggled with button or `L` key.
+     * Displays list of layers in vertical stack (top = in front, bottom = behind).
+     * Allows drag-and-drop layer reordering, visibility toggle (eye icon), layer renaming (double click), duplication, and deletion.
+
+8. User Interface Components (`js/ui/`):
+   - `js/ui/panels.js`: Left asset library panel. Displays thumbnails of imported Characters, Abilities, or Backgrounds. Clicking a card places that asset onto the current frame. "None" removes the asset from the current frame.
+   - `js/ui/timeline.js`: Bottom animation filmstrip. Renders mini thumbnail previews of each frame, duration in ms, add/duplicate/delete frame controls, and drag-and-drop frame reordering.
+   - `js/ui/toolbox.js` & `js/ui/toolOptions.js`: Right vertical toolbox (Select, Brush, Eraser, Ellipse, Blur, Layers) and contextual floating flyout dialog for configuring brush size, opacity, hardness, color picker, and hex code.
+   - `js/ui/menus.js` & `js/ui/popover.js`: Top menubar (File, Edit, View, Animation) and popovers for Onion Skin options and Transform options.
+
+================================================================================
+PART 3: THE PROBLEM WITH LAYERS CURRENTLY
+================================================================================
+
+Currently, the layer architecture in MAMS has a severe structural limitation:
+1. "Layers" are almost exclusively for DRAWINGS:
+   - When a user clicks "+ New layer" in the Layers panel (`#layAdd`), `addDrawLayer()` in `layerActions.js` creates a layer with `type: 'draw'`.
+   - Drawing tools only paint on `type: 'draw'`.
+2. The entire scene of Sprites is trapped in a single hardcoded "Default layer":
+   - In `layerModel.js`, `defaultLayers()` defines one monolithic layer:
+     `{ id: 'scene', name: 'Default layer', type: 'scene', visible: true }`
+   - In `canvasEditor.js`, `drawScene()` hardcodes the rendering of sprites:
+     First `frame.background`, then (onion skin hook), then `frame.character`, then `frame.ability`.
+   - In `state.js`, `newFrame()` defines fixed single slots:
+     `{ id, duration, character: null, ability: null, background: null, xf: {}, bgMode: 'auto', draws: {} }`
+   - In `panels.js`, clicking a character/ability/background in the library assigns directly to `currentFrame()[kind] = a.id`, replacing the only slot available for that category.
+   - In `selection.js`, `hitBody()` only searches the hardcoded list `['ability', 'character', 'background']`.
+
+THE CONSEQUENCES:
+- An animator CANNOT have multiple characters in a frame (e.g. 2 or 3 fighters interacting or battling).
+- An animator CANNOT have multiple abilities or visual effects on different z-planes (e.g. a magic aura behind the character, an energy blast in the middle, and a spark effect in front).
+- An animator CANNOT have multiple backgrounds or parallax layers (e.g. far sky, middle stage, foreground pillars).
+- An animator CANNOT reorder sprite elements relative to each other or relative to drawings (e.g. you cannot put a drawing layer between Character 1 and Character 2, or put an Ability behind the Character).
+
+================================================================================
+PART 4: YOUR REFACTORING ASSIGNMENT (THE PROMPT TO CLAUDE)
+================================================================================
+
+YOUR TASK:
+Refactor the layer system in MAMS so that LAYERS ACT AS CONTAINERS FOR CHARACTERS, ABILITIES, BACKGROUNDS, AND DRAWINGS, instead of restricting layers to drawings only and locking sprites into a rigid single "Default layer".
+
+CRITICAL REQUIREMENTS:
+1. Keep the main core functions, workflows, and visual styling intact:
+   - Vanilla JS (ES modules), Canvas 2D, IndexedDB, zero external dependencies.
+   - Fixed stage size (640x360).
+   - The Sprite Extraction tool (`js/import/spriteDetector.js`, `spriteCutter.js`, `extraction.js`) must remain intact with its existing classification (Character vs Ability) and asset library import.
+   - The left asset library panel (`js/ui/panels.js`) must continue to display Characters, Abilities, and Backgrounds.
+   - The Onion Skin system must continue to work across frames, including all container layers.
+   - The Animation Player (`AnimationPlayer`), Timeline, Frame Duplication, Frame Reordering, and FPS timing must continue to work seamlessly.
+   - Export to PNG frame, PNG sequence, and Project JSON (`mams-1`) must remain fully functional.
+   - Drawing tools (Brush, Eraser, Ellipse, Blur) and Undo/Redo must continue to work on drawing layers (or on layers that support drawings).
+
+2. How Container Layers Must Work:
+   A. Layer Definitions (`project.layers`):
+      - A layer in `project.layers` represents a discrete layer in the composition stack.
+      - Each layer has:
+        * `id`: unique ID (e.g., `layer_xxx`).
+        * `name`: user-editable label (e.g., "Fighter 1", "Aura", "Background", "Effects Drawing").
+        * `kind` or `type`: can be specific (`'character'`, `'ability'`, `'background'`, `'draw'`) OR a versatile container type (`'sprite'`, `'content'`) that can hold an asset or drawing.
+        * `visible`: boolean (eye toggle).
+   B. Per-Frame Layer Content:
+      - Instead of top-level `frame.character`, `frame.ability`, `frame.background`, frames should store content per layer ID.
+      - For instance, in each frame:
+        * `frame.layers = { [layerId]: { assetId: '...', xf: { x, y, w, h, rot }, bgMode: 'auto' } }` (or equivalent clean structure where each layer tracks its assigned asset ID, transform, and settings).
+        * `frame.draws[layerId]`: holds the drawing PNG blob for drawing layers.
+      - Multiple Character layers, multiple Ability layers, multiple Background layers, and multiple Drawing layers can now coexist in any arbitrary order!
+   C. Stacking & Rendering Order (`layerModel.js`, `canvasEditor.js`):
+      - Layers are rendered strictly according to `effectiveOrder(project, frameIndex)` from bottom to top.
+      - If a layer at the current position contains a Background asset, it renders that background with its transform/mode.
+      - If it contains a Character asset, it renders that character with its transform.
+      - If it contains an Ability asset, it renders that ability with its transform.
+      - If it is a Drawing layer, it renders that layer's drawing canvas.
+      - If a layer is marked hidden (`visible: false`), it is skipped during canvas rendering, playback, and export.
+   D. Asset Assignment Workflow (`panels.js`, `layersPanel.js`):
+      - When the user selects an asset from the left sidebar (Characters, Abilities, Backgrounds):
+        * If a layer of matching kind (or an active container layer) is selected in the Layers panel, assign the asset to that layer for the current frame.
+        * If no matching layer is selected, either assign to the first available matching layer, or allow the user to easily create a new layer for it (e.g., "+ Character Layer", "+ Ability Layer", "+ Background Layer").
+        * Clicking "None" clears the asset from the active layer of the current frame.
+   E. Selection & Canvas Interaction (`selection.js`, `transforms.js`):
+      - `state.sel` should track the selected `layerId` (instead of `'character'|'ability'|'background'`).
+      - On pointer down on the canvas, `hitBody(px, py)` tests visible layers from TOP to BOTTOM in `effectiveOrder`. The first layer whose asset bounds encompass the pointer becomes the selected layer (`state.sel = hitLayer.id`).
+      - Moving, rotating, and scaling on the canvas applies directly to that layer's transform in the current frame (`frame.layers[layerId].xf` or `frame.xf[layerId]`).
+      - Deleting the selected object (`Delete` key) clears the asset from that layer in the current frame.
+   F. Layers Panel UI (`layersPanel.js`, `index.html`):
+      - Update the "+ New layer" button to allow creating layers for Characters, Abilities, Backgrounds, and Drawings (e.g., a dropdown or quick buttons "+ Character", "+ Ability", "+ Background", "+ Drawing", or "+ New Layer" with a type selector).
+      - Each layer card in the panel should display:
+        * Eye button (toggle visibility).
+        * Thumbnail preview: if it holds a sprite, show the sprite thumbnail; if it's a drawing, show drawing thumbnail.
+        * Editable name (double click to rename).
+        * Type badge/indicator (e.g., Character, Ability, Background, Drawing).
+        * Duplicate button & Delete button.
+      - Dragging cards up and down reorders them in `effectiveOrder`, immediately updating the z-index stack of all scene elements!
+   G. Backward Compatibility & Project Migration (`transforms.js` / `layerModel.js` / `projectManager.js`):
+      - Existing projects and saved projects with legacy schema (`f.character`, `f.ability`, `f.background`, `f.draws`, `scene` layer) must be automatically migrated on load into discrete container layers so older projects open seamlessly without breaking or losing data.
+
+Please provide a clean, step-by-step implementation plan followed by the exact code modifications for each affected file (`js/core/state.js`, `js/editor/layerModel.js`, `js/editor/layerActions.js`, `js/editor/canvasEditor.js`, `js/editor/transforms.js`, `js/editor/selection.js`, `js/ui/layersPanel.js`, `js/ui/panels.js`, `js/app.js`, `js/core/projectManager.js`, and `index.html`).
+
+--------------------------------------------------------------------------------
+END OF PROMPT TO CLAUDE
+================================================================================

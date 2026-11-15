@@ -1,8 +1,9 @@
 // Right-hand toolbox. Choosing a tool announces it with the 'tool' event.
-import { state } from '../core/state.js';
-import { emit } from '../core/eventManager.js';
-import { openFlyout, toggleFlyout, hasOptions } from './toolOptions.js';
-import { $, el } from '../utils/helpers.js';
+import { state } from '../core/state.js?v=6';
+import { emit } from '../core/eventManager.js?v=6';
+import { openFlyout, toggleFlyout, hasOptions } from './toolOptions.js?v=6';
+import { toggleLayersPanel } from './layersPanel.js?v=6';
+import { $, el } from '../utils/helpers.js?v=6';
 
 const ICON = {
   select: '<path d="M5 3l14 8-6 2-3 6z"/>',
@@ -26,7 +27,7 @@ export function setTool(id) {
   if (!t || !t.enabled) return;
   state.tool = id; refresh(); emit('tool');
 }
-function refresh() { $('#tools').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tool === state.tool)); }
+function refresh() { $('#tools').querySelectorAll('button[data-tool]').forEach((b) => b.classList.toggle('on', b.dataset.tool === state.tool)); }
 
 export function initToolbox() {
   for (const t of TOOLS) {
@@ -38,5 +39,8 @@ export function initToolbox() {
     };
     $('#tools').append(b);
   }
+  $('#tools').append(el('div', 'tsep'));
+  const lb = el('button', 'vbtn', 'Layers'); lb.id = 'btnLayers'; lb.title = 'Layers panel (L)';
+  lb.onclick = toggleLayersPanel; $('#tools').append(lb);
   refresh();
 }
