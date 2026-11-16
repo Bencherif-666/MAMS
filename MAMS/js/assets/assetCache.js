@@ -1,12 +1,13 @@
-// Decodes every asset once. `bmp` is for canvas drawing, `url` for <img> thumbnails.
+// Decodes every asset once. `bmp` is for canvas drawing, `url` for <img> thumbnails, `blob` tells which pixels were decoded.
 const cache = new Map();
 export async function load(asset) {
   if (cache.has(asset.id)) return cache.get(asset.id);
-  const entry = { bmp: await createImageBitmap(asset.blob), url: URL.createObjectURL(asset.blob) };
+  const entry = { bmp: await createImageBitmap(asset.blob), url: URL.createObjectURL(asset.blob), blob: asset.blob };
   cache.set(asset.id, entry);
   return entry;
 }
 export const get = (id) => cache.get(id);
+export const ids = () => [...cache.keys()];
 export function release(id) {
   const e = cache.get(id);
   if (!e) return;
@@ -15,9 +16,9 @@ export function release(id) {
 export const clear = () => [...cache.keys()].forEach(release);
 export const loadAll = (project) => Promise.all(Object.values(project.assets).map(load));
 
-/** Decodes an asset again (after its pixels were edited) and frees the old copy. */
+/** Decodes an asset again (after its pixels changed) and frees the old copy. */
 export async function reload(asset) {
-  const old = cache.get(asset.id), entry = { bmp: await createImageBitmap(asset.blob), url: URL.createObjectURL(asset.blob) };
+  const old = cache.get(asset.id), entry = { bmp: await createImageBitmap(asset.blob), url: URL.createObjectURL(asset.blob), blob: asset.blob };
   cache.set(asset.id, entry);
   if (old) { old.bmp.close(); URL.revokeObjectURL(old.url); }
   return entry;

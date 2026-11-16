@@ -1,10 +1,10 @@
 // Extraction dialog: detect, adjust, classify and add sprites to the library.
-import { state, uid } from '../core/state.js?v=7';
-import { emit } from '../core/eventManager.js?v=7';
-import { addAsset } from '../assets/assetLibrary.js?v=7';
-import { detectAuto, detectGrid, getBackgroundKey } from '../import/spriteDetector.js?v=7';
-import { cutSprite } from '../import/spriteCutter.js?v=7';
-import { $, el, isPng, toast } from '../utils/helpers.js?v=7';
+import { state, uid } from '../core/state.js?v=8';
+import { emit } from '../core/eventManager.js?v=8';
+import { addAsset } from '../assets/assetLibrary.js?v=8';
+import { detectAuto, detectGrid, getBackgroundKey } from '../import/spriteDetector.js?v=8';
+import { cutSprite } from '../import/spriteCutter.js?v=8';
+import { $, el, isPng, toast } from '../utils/helpers.js?v=8';
 
 export async function openExtraction(file) {
   if (!isPng(file)) { toast('Unsupported file. Only PNG images can be imported.', true); return; }
@@ -100,7 +100,7 @@ export async function openExtraction(file) {
       const key = $('#exMode').value === 'manual' ? getBackgroundKey(getImageData(), +$('#exThr').value) : getBackgroundKey(getImageData(), +$('#exThr').value);
       for (const s of chosen) {
         const blob = await cutSprite(bmp, s.rect, key);
-        await addAsset({ id: uid(s.kind), name: s.name || 'Sprite', kind: s.kind, w: s.rect.w, h: s.rect.h, blob, src: s.rect });
+        await addAsset({ id: uid(s.kind), name: s.name || 'Sprite', kind: s.kind, w: s.rect.w, h: s.rect.h, blob, src: s.rect, folder: state.folder[s.kind] || null });
       }
       state.tab = chosen.some((s) => s.kind === 'character') ? 'characters' : 'abilities';
       emit('assets'); emit('tab'); toast(`${chosen.length} sprites added.`);

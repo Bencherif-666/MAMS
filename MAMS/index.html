@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mugen Animation Maker Studio</title>
-<link rel="stylesheet" href="css/main.css?v=7">
+<link rel="stylesheet" href="css/main.css?v=8">
 </head>
 <body>
 <header id="top">
-  <strong class="brand" title="Version 7: sprite panel and pixel editor">MAMS <small>v7</small></strong>
+  <strong class="brand" title="Version 8: undo for everything and asset folders">MAMS <small>v8</small></strong>
   <nav id="menubar" aria-label="Main menu"></nav>
   <div id="histBtns">
     <button id="btnUndo" title="Undo drawing (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -27,8 +27,10 @@
 <aside id="panel">
   <div class="panel-head">
     <h2 id="panelTitle">Characters</h2>
+    <button id="btnNewFolder" title="New folder in the open folder">+ Folder</button>
     <button id="btnAdd" title="Import PNG">+</button>
   </div>
+  <div id="crumbs" class="crumbs"></div>
   <div id="grid"></div>
 </aside>
 
@@ -157,6 +159,12 @@
   <p class="hint">"Save as new" keeps the original and uses the new sprite here. "Replace" changes the sprite in every frame that uses it.</p>
   <div class="ex-ctl end"><button id="saveBack">Keep editing</button></div>
 </dialog>
+<dialog id="folderDlg">
+  <h3 id="fdTitle">Delete folder</h3>
+  <p id="fdText"></p>
+  <div id="fdList" class="fd-list"></div>
+  <div class="ex-ctl end"><button id="fdCancel">Cancel</button><button id="fdDelete" class="danger">Delete folder and sprites</button></div>
+</dialog>
 <dialog id="exDlg">
   <div class="ex">
     <div class="ex-left">
@@ -192,6 +200,6 @@
 <div id="toast"></div>
 <input type="file" id="fileInput" accept="image/png" hidden>
 <input type="file" id="jsonInput" accept=".json,application/json" hidden>
-<script type="module" src="js/app.js?v=7"></script>
+<script type="module" src="js/app.js?v=8"></script>
 </body>
 </html>

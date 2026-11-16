@@ -1,8 +1,8 @@
 // Drawing layers: one stage-size canvas per (frame, layer), created lazily, saved as PNG blobs in frame.draws[layerId].
-// Also owns the undo/redo history for drawing operations.
-import { canvasToBlob } from '../utils/helpers.js?v=7';
+// Canvases of deleted frames or layers are moved to a "graveyard" so that Undo can bring them back.
+import { canvasToBlob } from '../utils/helpers.js?v=8';
 
-const canvases = new Map(), dirty = new Set(), undoStack = [], redoStack = [], LIMIT = 30;
+const canvases = new Map(), graveyard = new Map(), dirty = new Set(), GRAVE_LIMIT = 80;
 let stageSize = { w: 640, h: 360 };
 const key = (f, l) => `${f}|${l}`;
 const split = (k) => k.split('|');
@@ -15,31 +15,43 @@ export function ensure(frameId, layerId) {
   return c;
 }
 export const markDirty = (frameId, layerId) => dirty.add(key(frameId, layerId));
+export const layerIdsOfFrame = (frameId) => [...canvases.keys()].filter((k) => split(k)[0] === frameId).map((k) => split(k)[1]);
 
-export function clearAll() { canvases.clear(); dirty.clear(); undoStack.length = 0; redoStack.length = 0; }
+export function clearAll() { canvases.clear(); graveyard.clear(); dirty.clear(); }
 
+async function decodeInto(frameId, layerId, blob) {
+  const bmp = await createImageBitmap(blob);
+  ensure(frameId, layerId).getContext('2d').drawImage(bmp, 0, 0);
+  bmp.close();
+}
 /** Decodes every saved drawing of the project. */
 export async function loadAll(project) {
   clearAll(); stageSize = project.stage;
-  for (const f of project.frames) {
-    for (const [layerId, blob] of Object.entries(f.draws || {})) {
-      const bmp = await createImageBitmap(blob);
-      ensure(f.id, layerId).getContext('2d').drawImage(bmp, 0, 0);
-      bmp.close();
-    }
-  }
+  for (const f of project.frames) for (const [lid, blob] of Object.entries(f.draws || {})) await decodeInto(f.id, lid, blob);
+}
+/** After Undo/Redo: decode drawings that have a saved blob but no canvas. */
+export async function loadMissing(project) {
+  for (const f of project.frames) for (const [lid, blob] of Object.entries(f.draws || {})) if (!canvases.has(key(f.id, lid))) await decodeInto(f.id, lid, blob);
 }
 
-const keysOf = (pick, value) => [...canvases.keys()].filter((k) => split(k)[pick] === value);
-function purgeHistory(pick, value) {
-  const field = pick === 0 ? 'fid' : 'lid';
-  for (const st of [undoStack, redoStack]) for (let i = st.length - 1; i >= 0; i--) if (st[i][field] === value) st.splice(i, 1);
+function bury(k) {
+  const c = canvases.get(k);
+  if (!c) return;
+  canvases.delete(k); dirty.delete(k); graveyard.set(k, c);
+  while (graveyard.size > GRAVE_LIMIT) graveyard.delete(graveyard.keys().next().value);
 }
-export function release(frameId) { keysOf(0, frameId).forEach((k) => { canvases.delete(k); dirty.delete(k); }); purgeHistory(0, frameId); }
-export function releaseLayer(layerId) { keysOf(1, layerId).forEach((k) => { canvases.delete(k); dirty.delete(k); }); purgeHistory(1, layerId); }
+export function release(frameId) { [...canvases.keys()].filter((k) => split(k)[0] === frameId).forEach(bury); }
+export function releaseLayer(layerId) { [...canvases.keys()].filter((k) => split(k)[1] === layerId).forEach(bury); }
+
+/** Makes the canvases match the project: canvases of removed frames/layers are buried, buried ones that exist again come back. */
+export function reconcile(project) {
+  const frames = new Set(project.frames.map((f) => f.id)), layerIds = new Set(project.layers.map((l) => l.id));
+  for (const k of [...canvases.keys()]) { const [f, l] = split(k); if (!frames.has(f) || !layerIds.has(l)) bury(k); }
+  for (const [k, c] of [...graveyard]) { const [f, l] = split(k); if (frames.has(f) && layerIds.has(l)) { graveyard.delete(k); canvases.set(k, c); dirty.add(k); } }
+}
 
 export function duplicateFrame(srcId, dstId) {
-  for (const k of keysOf(0, srcId)) { const lid = split(k)[1]; ensure(dstId, lid).getContext('2d').drawImage(canvases.get(k), 0, 0); markDirty(dstId, lid); }
+  for (const lid of layerIdsOfFrame(srcId)) { ensure(dstId, lid).getContext('2d').drawImage(canvases.get(key(srcId, lid)), 0, 0); markDirty(dstId, lid); }
 }
 export function duplicateLayer(project, srcLayerId, newLayerId) {
   for (const f of project.frames) {
@@ -65,23 +77,10 @@ export async function flush(project) {
 }
 
 export function clear(frameId, layerId) {
-  pushUndo(frameId, layerId);
   const c = ensure(frameId, layerId);
   c.getContext('2d').clearRect(0, 0, c.width, c.height); markDirty(frameId, layerId);
 }
-export function clearFrame(frameId) { keysOf(0, frameId).forEach((k) => clear(frameId, split(k)[1])); }
 
-// ---- history: a pixel snapshot of one layer before each operation
-const snap = (fid, lid) => { const c = ensure(fid, lid); return { fid, lid, img: c.getContext('2d').getImageData(0, 0, c.width, c.height) }; };
-export function pushUndo(frameId, layerId) { undoStack.push(snap(frameId, layerId)); if (undoStack.length > LIMIT) undoStack.shift(); redoStack.length = 0; }
-function swap(from, to) {
-  const e = from.pop();
-  if (!e) return null;
-  to.push(snap(e.fid, e.lid));
-  ensure(e.fid, e.lid).getContext('2d').putImageData(e.img, 0, 0); markDirty(e.fid, e.lid);
-  return { frameId: e.fid, layerId: e.lid };
-}
-export const canUndo = () => undoStack.length > 0;
-export const canRedo = () => redoStack.length > 0;
-export const undoDraw = () => swap(undoStack, redoStack);
-export const redoDraw = () => swap(redoStack, undoStack);
+// pixel snapshots for the history
+export const snapCanvas = (frameId, layerId) => { const c = ensure(frameId, layerId); return c.getContext('2d').getImageData(0, 0, c.width, c.height); };
+export function putCanvas(frameId, layerId, img) { ensure(frameId, layerId).getContext('2d').putImageData(img, 0, 0); markDirty(frameId, layerId); }

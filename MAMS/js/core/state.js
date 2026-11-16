@@ -1,10 +1,11 @@
 // Single mutable application state. UI modules read it and announce changes through eventManager.
-import { defaultLayers, defaultOrder } from '../editor/layerModel.js?v=7';
+import { defaultLayers, defaultOrder } from '../editor/layerModel.js?v=8';
 
 export const state = {
   project: null, current: 0, tab: 'characters', zoom: 1, tool: 'select',
   sel: null,            // id of the selected object (sprite) in the current frame
   activeLayer: 'scene', // selected layer: new sprites, brush, eraser, ellipse and blur all go to it
+  folder: { character: null, ability: null, background: null }, // open asset folder of each category (null = top level)
   onion: { on: true, prev: true, next: false, alpha: 0.35, drawings: true }, // editing aid only, never saved or exported
 };
 
@@ -20,7 +21,7 @@ export function newFrame(duration = 83) {
 
 export function newProject(name = 'Untitled') {
   return {
-    id: uid('proj'), version: 4, name, fps: 12, loop: true, stage: { w: 640, h: 360 }, assets: {},
+    id: uid('proj'), version: 5, name, fps: 12, loop: true, stage: { w: 640, h: 360 }, assets: {}, folders: [],
     layers: defaultLayers(), baseOrder: defaultOrder(), frames: [newFrame()],
   };
 }

@@ -1,27 +1,28 @@
 // Entry point: wires modules together. Heavy logic lives in the modules.
-import { state, newProject, currentFrame, uid } from './core/state.js?v=7';
-import { on, emit } from './core/eventManager.js?v=7';
-import { exportProject, importProject } from './core/projectManager.js?v=7';
-import * as db from './storage/database.js?v=7';
-import * as cache from './assets/assetCache.js?v=7';
-import { renderFrame, exportFrameBlob } from './editor/canvasEditor.js?v=7';
-import { AnimationPlayer } from './editor/animationPlayer.js?v=7';
-import { BG_MODES, migrateProject } from './editor/transforms.js?v=7';
-import { effectiveOrder, layerById } from './editor/layerModel.js?v=7';
-import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=7';
-import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=7';
-import { initPanels } from './ui/panels.js?v=7';
-import { initTimeline } from './ui/timeline.js?v=7';
-import { initMenus } from './ui/menus.js?v=7';
-import { initToolbox, setTool } from './ui/toolbox.js?v=7';
-import { initToolOptions } from './ui/toolOptions.js?v=7';
-import { initSpritePanel, syncSpritePanel } from './ui/spritePanel.js?v=7';
-import { initSpriteEditor } from './editor/spriteEditor.js?v=7';
-import { initPopover } from './ui/popover.js?v=7';
-import * as layers from './editor/drawingLayers.js?v=7';
-import { initDrawing, drawToolPreview, undoDrawing, redoDrawing, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=7';
-import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=7';
-import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=7';
+import { state, newProject, currentFrame, uid } from './core/state.js?v=8';
+import { on, emit } from './core/eventManager.js?v=8';
+import { exportProject, importProject } from './core/projectManager.js?v=8';
+import * as db from './storage/database.js?v=8';
+import * as cache from './assets/assetCache.js?v=8';
+import { renderFrame, exportFrameBlob } from './editor/canvasEditor.js?v=8';
+import { AnimationPlayer } from './editor/animationPlayer.js?v=8';
+import { BG_MODES, migrateProject } from './editor/transforms.js?v=8';
+import { effectiveOrder, layerById } from './editor/layerModel.js?v=8';
+import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=8';
+import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=8';
+import { initPanels } from './ui/panels.js?v=8';
+import { initTimeline } from './ui/timeline.js?v=8';
+import { initMenus } from './ui/menus.js?v=8';
+import { initToolbox, setTool } from './ui/toolbox.js?v=8';
+import { initToolOptions } from './ui/toolOptions.js?v=8';
+import { initSpritePanel, syncSpritePanel } from './ui/spritePanel.js?v=8';
+import { initSpriteEditor } from './editor/spriteEditor.js?v=8';
+import { initPopover } from './ui/popover.js?v=8';
+import * as layers from './editor/drawingLayers.js?v=8';
+import { initDrawing, drawToolPreview, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=8';
+import * as H from './core/history.js?v=8';
+import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=8';
+import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=8';
 
 const stage = $('#stage'), sctx = stage.getContext('2d');
 const overlay = $('#overlay'), octx = overlay.getContext('2d');
@@ -39,7 +40,7 @@ function updateEditBar() {
   const p = state.project, o = findObject(state.sel), a = o && p.assets[o.asset], L = o && layerById(p, o.layer);
   $('#onionBtn').classList.toggle('on', state.onion.on);
   $('#onionOn').checked = state.onion.on;
-  $('#btnUndo').disabled = !layers.canUndo(); $('#btnRedo').disabled = !layers.canRedo();
+  $('#btnUndo').disabled = !H.canUndo(); $('#btnRedo').disabled = !H.canRedo();
   $('#selInfo').textContent = o && a ? `${a.name} · ${L ? L.name : ''} · ${o.w}×${o.h}px, ${Math.round(o.rot)}°` : 'Nothing selected';
   const isBg = !!a && a.kind === 'background';
   $('#bgMode').disabled = !isBg; if (isBg) $('#bgMode').value = o.mode || 'auto';
@@ -88,6 +89,7 @@ async function useProject(project) {
   await cache.loadAll(project);
   await layers.loadAll(project); // per-frame drawings
   Object.assign(state, { project, current: 0, sel: null, activeLayer: effectiveOrder(project, 0)[0] });
+  H.reset(); // a new project starts with an empty history
   stage.width = project.stage.w; stage.height = project.stage.h;
   overlay.width = project.stage.w + 2 * M; overlay.height = project.stage.h + 2 * M;
   $('#projName').value = project.name; $('#fps').value = project.fps;
@@ -138,15 +140,19 @@ const commands = {
     }
     toast(`${frames.length} frames exported.`);
   },
-  toggleLoop: () => { state.project.loop = !state.project.loop; $('#loop').classList.toggle('on', state.project.loop); },
+  toggleLoop: () => { state.project.loop = !state.project.loop; $('#loop').classList.toggle('on', state.project.loop); H.checkpoint(); },
   togglePlay: () => (player.playing ? player.pause() : player.play()),
   setFps: () => {
     const v = prompt('Frames per second (1–60)', state.project.fps);
     if (v) { $('#fps').value = v; $('#fps').dispatchEvent(new Event('change')); }
   },
-  clearFrame: () => {
-    if (!confirmDialog('Clear everything in this frame?')) return;
-    layers.clearFrame(currentFrame().id); currentFrame().objects = []; state.sel = null; emit('frames'); emit('select');
+  clearFrame: () => { // sprites and all drawings of this frame, undone together in one step
+    const f = currentFrame();
+    H.group(() => {
+      for (const lid of layers.layerIdsOfFrame(f.id)) { H.pushDraw(f.id, lid); layers.clear(f.id, lid); }
+      f.objects = []; state.sel = null; emit('frames'); emit('select');
+    });
+    toast('Frame cleared. Press Ctrl+Z to undo.');
   },
 };
 
@@ -165,7 +171,7 @@ $('#zoomIn').onclick = () => setZoom(state.zoom * 1.25);
 $('#zoomOut').onclick = () => setZoom(state.zoom / 1.25);
 $('#fit').onclick = fit;
 $('#clearFrame').onclick = commands.clearFrame;
-$('#projName').onchange = (e) => (state.project.name = e.target.value.trim() || 'Untitled');
+$('#projName').onchange = (e) => { state.project.name = e.target.value.trim() || 'Untitled'; H.checkpoint(); };
 $('#projClose').onclick = () => $('#projDlg').close();
 $('#jsonInput').onchange = async (e) => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -177,8 +183,9 @@ for (const [value, label] of Object.entries(BG_MODES)) $('#bgMode').append(new O
 initPopover($('#onionBtn'), $('#onionPop'));
 initPopover($('#xfBtn'), $('#xfPop'));
 $('#onionOn').onchange = (e) => { state.onion.on = e.target.checked; drawStage(); };
-$('#btnUndo').onclick = undoDrawing;
-$('#btnRedo').onclick = redoDrawing;
+$('#btnUndo').onclick = H.undo;
+$('#btnRedo').onclick = H.redo;
+on('hist', () => { $('#btnUndo').disabled = !H.canUndo(); $('#btnRedo').disabled = !H.canRedo(); });
 $('#onionPrev').onchange = (e) => { state.onion.prev = e.target.checked; drawStage(); };
 $('#onionNext').onchange = (e) => { state.onion.next = e.target.checked; drawStage(); };
 $('#onionDraw').onchange = (e) => { state.onion.drawings = e.target.checked; drawStage(); };
@@ -204,8 +211,8 @@ initMenus([
     { label: 'Export all frames (PNG sequence)', run: commands.pngSequence },
   ] },
   { label: 'Edit', items: [
-    { label: 'Undo drawing', key: 'Ctrl+Z', run: undoDrawing },
-    { label: 'Redo drawing', key: 'Ctrl+Y', run: redoDrawing },
+    { label: 'Undo', key: 'Ctrl+Z', run: H.undo },
+    { label: 'Redo', key: 'Ctrl+Y', run: H.redo },
     { label: 'Clear active layer drawing', run: clearDrawing },
     '-',
     { label: 'Delete selected object', key: 'Del', run: deleteSelected },
@@ -245,8 +252,8 @@ addEventListener('keydown', (e) => {
   if (mod && k === 'o') { e.preventDefault(); commands.open(); return; }
   if (document.body.classList.contains('editing')) return; // the sprite editor has its own keys
   if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || $('dialog[open]')) return;
-  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redoDrawing() : undoDrawing(); return; }
-  if (mod && k === 'y') { e.preventDefault(); redoDrawing(); return; }
+  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? H.redo() : H.undo(); return; }
+  if (mod && k === 'y') { e.preventDefault(); H.redo(); return; }
   if (mod && k === 'd') { e.preventDefault(); $('#dupFrame').click(); return; }
   if (mod) return;
   if (e.code === 'Space') { e.preventDefault(); commands.togglePlay(); }
@@ -266,5 +273,5 @@ addEventListener('beforeunload', () => player.destroy());
 addEventListener('resize', () => { if (state.zoom) fit(); });
 
 state.project = newProject();
-initPanels(); initTimeline(); initToolbox(); initToolOptions(); initLayersPanel(); initSpritePanel(drawStage); initSpriteEditor();
+initPanels(); initTimeline(); initToolbox(); initToolOptions(); initLayersPanel(); initSpritePanel(drawStage); initSpriteEditor(); H.initHistory();
 useProject(state.project);

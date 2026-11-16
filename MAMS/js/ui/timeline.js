@@ -1,9 +1,9 @@
-import { state, newFrame, uid, currentFrame } from '../core/state.js?v=7';
-import { on, emit } from '../core/eventManager.js?v=7';
-import { renderFrame } from '../editor/canvasEditor.js?v=7';
-import * as layers from '../editor/drawingLayers.js?v=7';
-import { snapshotOrders, restoreOrders } from '../editor/layerModel.js?v=7';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=7';
+import { state, newFrame, uid, currentFrame } from '../core/state.js?v=8';
+import { on, emit } from '../core/eventManager.js?v=8';
+import { renderFrame } from '../editor/canvasEditor.js?v=8';
+import * as layers from '../editor/drawingLayers.js?v=8';
+import { snapshotOrders, restoreOrders } from '../editor/layerModel.js?v=8';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=8';
 
 const frames = () => state.project.frames;
 const defaultDuration = () => Math.round(1000 / state.project.fps);
@@ -54,8 +54,7 @@ export function initTimeline() {
   $('#dupFrame').onclick = () => { const src = currentFrame(), c = structuredClone(src); c.id = uid('frame'); c.draws = {}; layers.duplicateFrame(src.id, c.id); insert(c, state.current + 1); };
   $('#delFrame').onclick = () => {
     if (frames().length === 1) { toast('A project needs at least one frame. Use Clear frame instead.', true); return; }
-    if (!confirmDialog(`Delete frame ${state.current + 1}?`)) return;
-    const snap = snapshotOrders(state.project); layers.release(frames().splice(state.current, 1)[0].id); restoreOrders(state.project, snap); state.current = Math.min(state.current, frames().length - 1); emit('frames');
+    const snap = snapshotOrders(state.project); layers.release(frames().splice(state.current, 1)[0].id); restoreOrders(state.project, snap); state.current = Math.min(state.current, frames().length - 1); emit('frames'); toast('Frame deleted. Press Ctrl+Z to undo.');
   };
   $('#prev').onclick = () => select(state.current - 1);
   $('#next').onclick = () => select(state.current + 1);

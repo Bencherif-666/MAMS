@@ -1,13 +1,13 @@
 // Pixel sprite editor: a full page opened by the EDIT button. It works on a copy of the sprite's pixels;
 // nothing changes in the project until you press Done and choose "Save as new" or "Replace the original".
-import { state, uid } from '../core/state.js?v=7';
-import { emit } from '../core/eventManager.js?v=7';
-import * as cache from '../assets/assetCache.js?v=7';
-import { addAsset } from '../assets/assetLibrary.js?v=7';
-import { replaceAsset } from './objects.js?v=7';
-import { resizeTransform } from './selection.js?v=7';
-import * as P from './pixelOps.js?v=7';
-import { $, el, toast, canvasToBlob, confirmDialog } from '../utils/helpers.js?v=7';
+import { state, uid } from '../core/state.js?v=8';
+import { emit } from '../core/eventManager.js?v=8';
+import * as cache from '../assets/assetCache.js?v=8';
+import { addAsset } from '../assets/assetLibrary.js?v=8';
+import { replaceAsset } from './objects.js?v=8';
+import { resizeTransform } from './selection.js?v=8';
+import * as P from './pixelOps.js?v=8';
+import { $, el, toast, canvasToBlob, confirmDialog } from '../utils/helpers.js?v=8';
 
 const RAD = Math.PI / 180, HIST_LIMIT = 40;
 const prefs = { color: '#000000', size: 1, filled: false, grid: true, keepRatio: true, recent: [] };
@@ -286,20 +286,19 @@ function finish() {
 }
 async function saveNew() { // a new sprite in the library; this object switches to it, the original stays untouched
   const blob = await canvasToBlob(ed.work), name = $('#saveName').value.trim() || `${ed.asset.name} edited`;
-  const a = { id: uid(ed.asset.kind), name, kind: ed.asset.kind, w: ed.work.width, h: ed.work.height, blob };
+  const a = { id: uid(ed.asset.kind), name, kind: ed.asset.kind, w: ed.work.width, h: ed.work.height, blob, folder: ed.asset.folder || null };
   await addAsset(a); replaceAsset(ed.obj, a);
   toast(`Saved as "${name}".`); closeEditor();
 }
 async function saveReplace() { // the original changes everywhere it is used
-  if (!confirmDialog('Replace the original sprite everywhere it is used? This cannot be undone.')) return;
   const blob = await canvasToBlob(ed.work), a = ed.asset, ow = a.w, oh = a.h, nw = ed.work.width, nh = ed.work.height;
-  a.blob = blob; a.w = nw; a.h = nh; await cache.reload(a);
+  a.blob = blob; a.w = nw; a.h = nh; a.rev = (a.rev || 0) + 1; await cache.reload(a); // rev lets Undo notice the change
   if (nw !== ow || nh !== oh) for (const f of state.project.frames) for (const o of f.objects) {
     if (o.asset !== a.id) continue; // keep the centre, scale with the new size
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2; o.w = Math.max(1, Math.round(o.w * nw / ow)); o.h = Math.max(1, Math.round(o.h * nh / oh));
     o.x = Math.round(cx - o.w / 2); o.y = Math.round(cy - o.h / 2);
   }
-  toast(`"${a.name}" was replaced.`); closeEditor(); emit('frames');
+  toast(`"${a.name}" was replaced. Ctrl+Z undoes it.`); closeEditor(); emit('frames');
 }
 function changeCanvasSize() {
   commitFloat();

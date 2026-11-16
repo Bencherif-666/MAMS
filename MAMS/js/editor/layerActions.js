@@ -1,9 +1,9 @@
 // Adding, duplicating and deleting layers. Layers are containers: they hold sprites and a drawing.
-import { state, uid, currentFrame } from '../core/state.js?v=7';
-import { emit } from '../core/eventManager.js?v=7';
-import * as layers from './drawingLayers.js?v=7';
-import { effectiveOrder, setOrder } from './layerModel.js?v=7';
-import { confirmDialog, toast } from '../utils/helpers.js?v=7';
+import { state, uid, currentFrame } from '../core/state.js?v=8';
+import { emit } from '../core/eventManager.js?v=8';
+import * as layers from './drawingLayers.js?v=8';
+import { effectiveOrder, setOrder } from './layerModel.js?v=8';
+import { toast } from '../utils/helpers.js?v=8';
 
 function place(id, aboveId) { // aboveId null = very top. The order is saved at the current frame (and continues forward).
   const p = state.project, o = effectiveOrder(p, state.current).filter((x) => x !== id);
@@ -37,7 +37,6 @@ export function duplicateLayer(L) {
 export function deleteLayer(L) {
   const p = state.project;
   if (p.layers.length <= 1) { toast('A project needs at least one layer.', true); return; }
-  if (!confirmDialog(`Delete layer "${L.name}" with all its sprites and drawings in every frame?`)) return;
   p.layers = p.layers.filter((l) => l.id !== L.id);
   p.baseOrder = p.baseOrder.filter((x) => x !== L.id);
   for (const f of p.frames) {
@@ -49,4 +48,5 @@ export function deleteLayer(L) {
   if (state.activeLayer === L.id) state.activeLayer = effectiveOrder(p, state.current)[0];
   if (!currentFrame().objects.some((o) => o.id === state.sel)) state.sel = null;
   emit('frames'); emit('select');
+  toast(`Layer "${L.name}" deleted. Press Ctrl+Z to undo.`);
 }

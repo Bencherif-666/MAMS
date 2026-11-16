@@ -1,7 +1,7 @@
-import * as cache from '../assets/assetCache.js?v=7';
-import { canvasToBlob } from '../utils/helpers.js?v=7';
-import * as layers from './drawingLayers.js?v=7';
-import { effectiveOrder, layerById } from './layerModel.js?v=7';
+import * as cache from '../assets/assetCache.js?v=8';
+import { canvasToBlob } from '../utils/helpers.js?v=8';
+import * as layers from './drawingLayers.js?v=8';
+import { effectiveOrder, layerById } from './layerModel.js?v=8';
 
 let ghostCanvas = null; // one reusable offscreen buffer for onion skin tinting
 

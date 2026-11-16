@@ -1,10 +1,11 @@
 // Brush, eraser, ellipse and blur. They paint on the ACTIVE drawing layer of the current frame, never on sprites.
-import { state, currentFrame } from '../core/state.js?v=7';
-import { emit, on } from '../core/eventManager.js?v=7';
-import * as layers from './drawingLayers.js?v=7';
-import { layerById } from './layerModel.js?v=7';
-import { OVERLAY_MARGIN as M } from './selection.js?v=7';
-import { toast } from '../utils/helpers.js?v=7';
+import { state, currentFrame } from '../core/state.js?v=8';
+import { emit, on } from '../core/eventManager.js?v=8';
+import * as layers from './drawingLayers.js?v=8';
+import * as H from '../core/history.js?v=8';
+import { layerById } from './layerModel.js?v=8';
+import { OVERLAY_MARGIN as M } from './selection.js?v=8';
+import { toast } from '../utils/helpers.js?v=8';
 
 export const settings = { color: '#ff5533', size: 12, opacity: 1, hardness: 80, fill: 'outline' };
 export const DRAW_TOOLS = ['brush', 'eraser', 'ellipse', 'blur'];
@@ -90,18 +91,9 @@ export function drawToolPreview(ctx, zoom, hidden) {
   ctx.restore();
 }
 
-function afterHistory(entry, what) {
-  if (!entry) { toast(`Nothing to ${what}.`); return; }
-  const i = state.project.frames.findIndex((f) => f.id === entry.frameId);
-  if (i >= 0) state.current = i;
-  if (layerById(state.project, entry.layerId)) state.activeLayer = entry.layerId;
-  emit('frames');
-}
-export const undoDrawing = () => afterHistory(layers.undoDraw(), 'undo');
-export const redoDrawing = () => afterHistory(layers.redoDraw(), 'redo');
 export function clearDrawing() {
   if (!layerById(state.project, state.activeLayer)) return;
-  layers.clear(currentFrame().id, state.activeLayer); emit('frames');
+  H.pushDraw(currentFrame().id, state.activeLayer); layers.clear(currentFrame().id, state.activeLayer); emit('frames');
 }
 
 export function initDrawing({ overlay, redraw, redrawOverlay, commit, canEdit }) {
@@ -116,7 +108,7 @@ export function initDrawing({ overlay, redraw, redrawOverlay, commit, canEdit })
     if (!L) { toast('Select a layer in the Layers panel first.', true); return; }
     if (!L.visible) { toast(`"${L.name}" is hidden. Click its eye icon to show it.`, true); return; }
     const f = currentFrame(), p = pt(e), { w, h } = state.project.stage;
-    layers.pushUndo(f.id, L.id);
+    H.pushDraw(f.id, L.id);
     stroke = { tool: state.tool, frameId: f.id, layerId: L.id, dc: layers.ensure(f.id, L.id), last: p, smooth: p, raw: p, start: p, cur: p, carry: 0, shift: e.shiftKey };
     if (strokeCanvas.width !== w || strokeCanvas.height !== h) { strokeCanvas.width = w; strokeCanvas.height = h; }
     else strokeCanvas.getContext('2d').clearRect(0, 0, w, h);

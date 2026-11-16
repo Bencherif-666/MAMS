@@ -1,6 +1,6 @@
 // Placement of objects and upgrade of projects saved by older versions.
-import { upgradeLayers } from './layerModel.js?v=7';
-import { uid } from '../core/state.js?v=7';
+import { upgradeLayers } from './layerModel.js?v=8';
+import { uid } from '../core/state.js?v=8';
 
 export const BG_MODES = { auto: 'Auto', stretch: 'Stretch to canvas', original: 'Original size', cover: 'Cover' };
 const box = (w, h, x, y) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), rot: 0 });
@@ -31,6 +31,7 @@ export function clampBackground(project, obj) {
 /** Upgrades older projects in place. Old background/character/ability become objects of the Default layer. */
 export function migrateProject(p) {
   upgradeLayers(p);
+  p.folders ??= [];
   const sceneId = (p.layers.find((l) => l.id === 'scene') || p.layers[0]).id;
   for (const f of p.frames) {
     f.draws ??= {};
