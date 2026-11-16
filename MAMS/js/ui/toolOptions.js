@@ -1,9 +1,9 @@
 // Tool options flyout: a small box beside the toolbox, shown only when a tool button is clicked.
 // Values live in `settings`, so they are kept while the box is hidden.
-import { state } from '../core/state.js?v=6';
-import { on } from '../core/eventManager.js?v=6';
-import { settings, DRAW_TOOLS } from '../editor/drawingTools.js?v=6';
-import { $ } from '../utils/helpers.js?v=6';
+import { state } from '../core/state.js?v=7';
+import { on } from '../core/eventManager.js?v=7';
+import { settings, DRAW_TOOLS } from '../editor/drawingTools.js?v=7';
+import { $ } from '../utils/helpers.js?v=7';
 
 const TITLE = { brush: 'Brush', eraser: 'Eraser', ellipse: 'Circle / ellipse', blur: 'Blur' };
 const HINT = {

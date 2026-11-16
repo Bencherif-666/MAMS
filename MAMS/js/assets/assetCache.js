@@ -14,3 +14,11 @@ export function release(id) {
 }
 export const clear = () => [...cache.keys()].forEach(release);
 export const loadAll = (project) => Promise.all(Object.values(project.assets).map(load));
+
+/** Decodes an asset again (after its pixels were edited) and frees the old copy. */
+export async function reload(asset) {
+  const old = cache.get(asset.id), entry = { bmp: await createImageBitmap(asset.blob), url: URL.createObjectURL(asset.blob) };
+  cache.set(asset.id, entry);
+  if (old) { old.bmp.close(); URL.revokeObjectURL(old.url); }
+  return entry;
+}

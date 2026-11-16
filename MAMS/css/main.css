@@ -128,3 +128,52 @@ dialog::backdrop{background:#000a}
 .tsep{height:1px;background:var(--line);margin:4px 0}
 .vbtn{writing-mode:vertical-rl;width:40px;height:84px;padding:0;letter-spacing:.12em}
 .popover .row2{display:flex;gap:6px}.popover .row2 button{flex:1}
+
+#spritePanel{grid-column:2;grid-row:2;display:none;flex-direction:column;gap:10px;padding:12px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+body.has-sel #panel{display:none}
+body.has-sel #spritePanel{display:flex}
+body.no-left #spritePanel{display:none}
+.sp-back{align-self:flex-start}
+.sp-thumb{height:110px}
+.sp-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#spritePanel .rng,.ed-side .rng{display:flex;flex-direction:column;gap:4px}
+#spritePanel input[type=range]{width:100%;accent-color:var(--accent)}
+.sp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sp-grid label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--dim)}
+.sp-grid input{width:100%}
+#spritePanel .chk,.ed-side .chk{display:flex;align-items:center;gap:6px}
+#spritePanel .row2,.ed-side .row2{display:flex;gap:6px}
+#spritePanel .row2 button,.ed-side .row2 button{flex:1}
+#spritePanel select{width:100%}
+#spFlip.on{background:var(--accent);border-color:var(--accent);color:#07111f}
+.big{width:100%;padding:16px 10px;font-size:17px;font-weight:700;letter-spacing:.1em}
+#spEdit{margin-top:auto}
+#editor{position:fixed;left:0;right:0;top:44px;bottom:0;z-index:60;display:flex;flex-direction:column;background:var(--bg)}
+#editor[hidden]{display:none}
+.ed-top{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.ed-top .sep{width:1px;height:22px;background:var(--line)}
+.ibtn{width:34px;height:28px;padding:0;display:grid;place-items:center}
+.ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ed-body{flex:1;display:flex;min-height:0}
+.ed-tools{width:56px;display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--panel);border-right:1px solid var(--line)}
+.ed-tools button{width:40px;height:40px;padding:0;display:grid;place-items:center}
+.ed-tools svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ed-view{flex:1;min-width:0;overflow:auto;display:flex;padding:30px;background:#0f1013}
+.ed-box{position:relative;margin:auto;flex:none}
+#edWork{display:block;image-rendering:pixelated;background:conic-gradient(#3a3d45 25%,#2c2f36 0 50%,#3a3d45 0 75%,#2c2f36 0) 0 0/16px 16px;box-shadow:0 0 0 1px var(--line)}
+#edOver{position:absolute;left:0;top:0;touch-action:none;image-rendering:pixelated}
+.ed-side{width:250px;display:flex;flex-direction:column;gap:12px;padding:12px;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto}
+.ed-side .grp[hidden],.ed-side .chk[hidden]{display:none}
+.ed-side .lab{margin-bottom:4px}
+.ed-side .colorrow{display:flex;gap:6px}
+.ed-side input[type=color]{width:44px;height:30px;padding:0;border:1px solid var(--line);background:none}
+.ed-side input[type=text]{flex:1;min-width:0;font-family:monospace}
+.ed-side label{display:grid;grid-template-columns:1fr auto;gap:4px 6px;align-items:center}
+.ed-side label input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.ed-side .sp-grid label{display:flex}
+.swatches{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.swatch{width:22px;height:22px;padding:0;border-radius:3px}
+.save-actions{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+#saveDlg{min-width:360px}
+#saveDlg .rng{display:flex;flex-direction:column;gap:4px}
+#toast{z-index:90}

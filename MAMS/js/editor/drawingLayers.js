@@ -1,6 +1,6 @@
 // Drawing layers: one stage-size canvas per (frame, layer), created lazily, saved as PNG blobs in frame.draws[layerId].
 // Also owns the undo/redo history for drawing operations.
-import { canvasToBlob } from '../utils/helpers.js?v=6';
+import { canvasToBlob } from '../utils/helpers.js?v=7';
 
 const canvases = new Map(), dirty = new Set(), undoStack = [], redoStack = [], LIMIT = 30;
 let stageSize = { w: 640, h: 360 };

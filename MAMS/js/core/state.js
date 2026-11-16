@@ -1,5 +1,5 @@
 // Single mutable application state. UI modules read it and announce changes through eventManager.
-import { defaultLayers, defaultOrder } from '../editor/layerModel.js?v=6';
+import { defaultLayers, defaultOrder } from '../editor/layerModel.js?v=7';
 
 export const state = {
   project: null, current: 0, tab: 'characters', zoom: 1, tool: 'select',

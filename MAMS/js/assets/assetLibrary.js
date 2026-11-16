@@ -1,7 +1,7 @@
 // Characters, abilities and backgrounds are one library filtered by `kind`.
-import { state, uid } from '../core/state.js?v=6';
-import { isPng } from '../utils/helpers.js?v=6';
-import * as cache from './assetCache.js?v=6';
+import { state, uid } from '../core/state.js?v=7';
+import { isPng } from '../utils/helpers.js?v=7';
+import * as cache from './assetCache.js?v=7';
 
 export const listAssets = (kind) => Object.values(state.project.assets).filter((a) => a.kind === kind);
 

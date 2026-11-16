@@ -1,10 +1,10 @@
 // Extraction dialog: detect, adjust, classify and add sprites to the library.
-import { state, uid } from '../core/state.js?v=6';
-import { emit } from '../core/eventManager.js?v=6';
-import { addAsset } from '../assets/assetLibrary.js?v=6';
-import { detectAuto, detectGrid, getBackgroundKey } from '../import/spriteDetector.js?v=6';
-import { cutSprite } from '../import/spriteCutter.js?v=6';
-import { $, el, isPng, toast } from '../utils/helpers.js?v=6';
+import { state, uid } from '../core/state.js?v=7';
+import { emit } from '../core/eventManager.js?v=7';
+import { addAsset } from '../assets/assetLibrary.js?v=7';
+import { detectAuto, detectGrid, getBackgroundKey } from '../import/spriteDetector.js?v=7';
+import { cutSprite } from '../import/spriteCutter.js?v=7';
+import { $, el, isPng, toast } from '../utils/helpers.js?v=7';
 
 export async function openExtraction(file) {
   if (!isPng(file)) { toast('Unsupported file. Only PNG images can be imported.', true); return; }

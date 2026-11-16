@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mugen Animation Maker Studio</title>
-<link rel="stylesheet" href="css/main.css?v=6">
+<link rel="stylesheet" href="css/main.css?v=7">
 </head>
 <body>
 <header id="top">
-  <strong class="brand" title="Version 6: layers hold sprites and drawings">MAMS <small>v6</small></strong>
+  <strong class="brand" title="Version 7: sprite panel and pixel editor">MAMS <small>v7</small></strong>
   <nav id="menubar" aria-label="Main menu"></nav>
   <div id="histBtns">
     <button id="btnUndo" title="Undo drawing (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -30,6 +30,22 @@
     <button id="btnAdd" title="Import PNG">+</button>
   </div>
   <div id="grid"></div>
+</aside>
+
+<aside id="spritePanel" aria-label="Selected sprite">
+  <button id="spBack" class="sp-back" title="Back to the asset list (Esc)">← Assets</button>
+  <div class="sp-thumb thumb"><img id="spImg" alt=""></div>
+  <div id="spName" class="sp-name"></div>
+  <label class="rng">Opacity <span><output id="spOpOut">100</output>%</span><input type="range" id="spOpacity" min="0" max="100" value="100"></label>
+  <div class="sp-grid">
+    <label>Width <input type="number" id="spW" min="1"></label>
+    <label>Height <input type="number" id="spH" min="1"></label>
+    <label>Rotation <input type="number" id="spRot" step="1"></label>
+  </div>
+  <label class="chk"><input type="checkbox" id="spLock" checked> Keep proportions</label>
+  <div class="row2"><button id="spFlip" title="Turn the sprite to look the other way (this frame only)">Flip ⇄</button><button id="spDelete" title="Remove from this frame (Del)">Delete</button></div>
+  <label class="rng">Layer <select id="spLayer"></select></label>
+  <button id="spEdit" class="big primary" title="Open the pixel editor for this sprite">EDIT</button>
 </aside>
 
 <main>
@@ -97,6 +113,50 @@
   <p class="hint" id="toolHint"></p>
 </div>
 
+<section id="editor" hidden aria-label="Sprite editor">
+  <div class="ed-top">
+    <strong id="edTitle">Editing</strong>
+    <button id="edUndo" class="ibtn" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button id="edRedo" class="ibtn" title="Redo (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+    <span class="sep"></span>
+    <button id="edFlipH" title="Flip left/right: turns the character to look the other way">Flip ⇄</button>
+    <button id="edFlipV" title="Flip up/down">Flip ⇅</button>
+    <button id="edRotL" title="Rotate 90° left">⟲ 90°</button>
+    <button id="edRotR" title="Rotate 90° right">⟳ 90°</button>
+    <span class="hint">(they act on the selected part, or on the whole sprite)</span>
+    <span class="sp"></span>
+    <button id="edZoomOut" title="Zoom out (-)">−</button><span id="edZoomLbl">100%</span><button id="edZoomIn" title="Zoom in (+)">+</button>
+    <button id="edFit" title="Fit to the page">Fit</button>
+    <button id="edGrid" title="Pixel grid (H)">Grid</button>
+    <button id="edCanvasSize" title="Change the canvas size in pixels">Canvas size</button>
+    <button id="edCancel">Cancel</button>
+    <button id="edDone" class="primary" title="Finish and save">Done</button>
+  </div>
+  <div class="ed-body">
+    <nav id="edTools" class="ed-tools" aria-label="Pixel tools"></nav>
+    <div id="edView" class="ed-view"><div class="ed-box"><canvas id="edWork"></canvas><canvas id="edOver"></canvas></div></div>
+    <aside class="ed-side">
+      <div class="grp"><div class="lab">Color</div><div class="colorrow"><input type="color" id="edColor" value="#000000"><input type="text" id="edHex" value="#000000" maxlength="7" spellcheck="false"></div><div id="edRecent" class="swatches"></div></div>
+      <div class="grp" id="edSizeGrp"><label><span>Brush size</span><span><output id="edSizeOut">1</output> px</span><input type="range" id="edSize" min="1" max="32" value="1"></label></div>
+      <label class="chk" id="edFillGrp"><input type="checkbox" id="edFilled"> Filled rectangle</label>
+      <div class="grp" id="edSelGrp" hidden>
+        <div class="lab">Selected part (pixels)</div>
+        <div class="sp-grid"><label>Width <input type="number" id="edW" min="1"></label><label>Height <input type="number" id="edH" min="1"></label><label>Rotation <input type="number" id="edRot"></label></div>
+        <label class="chk"><input type="checkbox" id="edRatio" checked> Keep proportions (Shift = free)</label>
+        <div class="row2"><button id="edDelSel" title="Delete (the hole stays)">Delete part</button><button id="edApply" title="Place the part (Enter)">Apply</button></div>
+        <p class="hint">Drag the part to move it. Handles resize it, the round handle rotates it. Esc puts it back.</p>
+      </div>
+      <p class="hint" id="edStatus"></p>
+    </aside>
+  </div>
+</section>
+<dialog id="saveDlg">
+  <h3>Save your sprite</h3>
+  <label class="rng">Name for a new sprite <input type="text" id="saveName" spellcheck="false"></label>
+  <div class="save-actions"><button id="saveNew" class="primary">Save as new sprite</button><button id="saveReplace">Replace the original</button></div>
+  <p class="hint">"Save as new" keeps the original and uses the new sprite here. "Replace" changes the sprite in every frame that uses it.</p>
+  <div class="ex-ctl end"><button id="saveBack">Keep editing</button></div>
+</dialog>
 <dialog id="exDlg">
   <div class="ex">
     <div class="ex-left">
@@ -132,6 +192,6 @@
 <div id="toast"></div>
 <input type="file" id="fileInput" accept="image/png" hidden>
 <input type="file" id="jsonInput" accept=".json,application/json" hidden>
-<script type="module" src="js/app.js?v=6"></script>
+<script type="module" src="js/app.js?v=7"></script>
 </body>
 </html>

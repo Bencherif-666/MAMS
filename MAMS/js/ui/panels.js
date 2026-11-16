@@ -1,11 +1,11 @@
 // Asset panel (characters, abilities, backgrounds). Clicking an asset puts it on the SELECTED layer.
-import { state } from '../core/state.js?v=6';
-import { on, emit } from '../core/eventManager.js?v=6';
-import { listAssets, removeAsset, addBackground } from '../assets/assetLibrary.js?v=6';
-import * as cache from '../assets/assetCache.js?v=6';
-import { addObject, replaceAsset, findObject } from '../editor/objects.js?v=6';
-import { openExtraction } from './extraction.js?v=6';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=6';
+import { state } from '../core/state.js?v=7';
+import { on, emit } from '../core/eventManager.js?v=7';
+import { listAssets, removeAsset, addBackground } from '../assets/assetLibrary.js?v=7';
+import * as cache from '../assets/assetCache.js?v=7';
+import { addObject, replaceAsset, findObject } from '../editor/objects.js?v=7';
+import { openExtraction } from './extraction.js?v=7';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=7';
 
 const KIND = { characters: 'character', abilities: 'ability', backgrounds: 'background' };
 const TITLE = { characters: 'Characters', abilities: 'Abilities', backgrounds: 'Backgrounds' };
@@ -55,7 +55,7 @@ function build() {
 
 export function initPanels() {
   on('assets', build); on('tab', build); on('frames', build); on('select', build);
-  document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { state.tab = b.dataset.tab; emit('tab'); }));
+  document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { state.tab = b.dataset.tab; state.sel = null; emit('tab'); emit('stage'); }));
   $('#btnAdd').onclick = () => { $('#fileInput').multiple = state.tab === 'backgrounds'; $('#fileInput').click(); };
   $('#fileInput').onchange = (e) => { const f = [...e.target.files]; e.target.value = ''; if (f.length) handleFiles(f); };
   const panel = $('#panel');

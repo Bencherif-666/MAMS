@@ -1,9 +1,9 @@
 // Right-hand toolbox. Choosing a tool announces it with the 'tool' event.
-import { state } from '../core/state.js?v=6';
-import { emit } from '../core/eventManager.js?v=6';
-import { openFlyout, toggleFlyout, hasOptions } from './toolOptions.js?v=6';
-import { toggleLayersPanel } from './layersPanel.js?v=6';
-import { $, el } from '../utils/helpers.js?v=6';
+import { state } from '../core/state.js?v=7';
+import { emit } from '../core/eventManager.js?v=7';
+import { openFlyout, toggleFlyout, hasOptions } from './toolOptions.js?v=7';
+import { toggleLayersPanel } from './layersPanel.js?v=7';
+import { $, el } from '../utils/helpers.js?v=7';
 
 const ICON = {
   select: '<path d="M5 3l14 8-6 2-3 6z"/>',

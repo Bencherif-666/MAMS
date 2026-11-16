@@ -1,10 +1,10 @@
 // Selecting, moving, resizing and rotating the objects (sprites) of the current frame.
 // Handles live on a separate overlay canvas, so they never become part of a frame.
-import { state, currentFrame } from '../core/state.js?v=6';
-import { emit } from '../core/eventManager.js?v=6';
-import { clampBackground } from './transforms.js?v=6';
-import { effectiveOrder, layerById } from './layerModel.js?v=6';
-import { findObject } from './objects.js?v=6';
+import { state, currentFrame } from '../core/state.js?v=7';
+import { emit } from '../core/eventManager.js?v=7';
+import { clampBackground } from './transforms.js?v=7';
+import { effectiveOrder, layerById } from './layerModel.js?v=7';
+import { findObject } from './objects.js?v=7';
 
 export const OVERLAY_MARGIN = 40; // stage pixels of space around the canvas so edge handles stay reachable
 const M = OVERLAY_MARGIN, RAD = Math.PI / 180, MIN = 4, ROT_OFFSET = 26;

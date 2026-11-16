@@ -1,4 +1,4 @@
-import { canvasToBlob } from '../utils/helpers.js?v=6';
+import { canvasToBlob } from '../utils/helpers.js?v=7';
 
 /** Copies one rectangle into its own PNG blob; keys out an opaque background colour if given. */
 export async function cutSprite(bitmap, r, key = null) {

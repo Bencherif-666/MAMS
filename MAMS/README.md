@@ -87,3 +87,8 @@ Delete the whole old `MAMS` folder first, copy the new one in (keep the hidden `
 - The **Default layer** is an ordinary layer: hide, rename, reorder, delete it. A project always keeps at least one layer.
 - **Transform** popup: move the selected sprite to another layer, change a background's placement, reset, delete. **Alt+click** an asset replaces the selected sprite (same place and scale).
 - Old projects open with their background, character and ability together in the Default layer.
+
+## Sprite panel and pixel editor (version 7)
+- **Sprite panel**: click a sprite on the canvas and the asset list is replaced by that sprite's settings: opacity, width / height / rotation, keep proportions, quick Flip ⇄ (this frame only), layer, Delete, and the big **EDIT** button. "← Assets" (or Esc, or an asset tab) brings the asset list back.
+- **EDIT** opens a full-page pixel editor on a copy of the sprite: pencil, eraser, eyedropper (Alt+click), paint bucket, line, rectangle (outline or filled), color picker + HEX + recent colors, select a part (move, resize, rotate, delete), Flip ⇄ / ⇅ and Rotate 90° (selected part, or the whole sprite), undo/redo, zoom with pixel grid, canvas size. Everything is in whole pixels.
+- **Done** asks each time: **Save as new sprite** (original kept, this sprite switches to the new one) or **Replace the original** (changes every frame that uses it).

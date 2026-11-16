@@ -1,25 +1,27 @@
 // Entry point: wires modules together. Heavy logic lives in the modules.
-import { state, newProject, currentFrame, uid } from './core/state.js?v=6';
-import { on, emit } from './core/eventManager.js?v=6';
-import { exportProject, importProject } from './core/projectManager.js?v=6';
-import * as db from './storage/database.js?v=6';
-import * as cache from './assets/assetCache.js?v=6';
-import { renderFrame, exportFrameBlob } from './editor/canvasEditor.js?v=6';
-import { AnimationPlayer } from './editor/animationPlayer.js?v=6';
-import { BG_MODES, migrateProject } from './editor/transforms.js?v=6';
-import { effectiveOrder, layerById } from './editor/layerModel.js?v=6';
-import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=6';
-import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=6';
-import { initPanels } from './ui/panels.js?v=6';
-import { initTimeline } from './ui/timeline.js?v=6';
-import { initMenus } from './ui/menus.js?v=6';
-import { initToolbox, setTool } from './ui/toolbox.js?v=6';
-import { initToolOptions } from './ui/toolOptions.js?v=6';
-import { initPopover } from './ui/popover.js?v=6';
-import * as layers from './editor/drawingLayers.js?v=6';
-import { initDrawing, drawToolPreview, undoDrawing, redoDrawing, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=6';
-import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=6';
-import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=6';
+import { state, newProject, currentFrame, uid } from './core/state.js?v=7';
+import { on, emit } from './core/eventManager.js?v=7';
+import { exportProject, importProject } from './core/projectManager.js?v=7';
+import * as db from './storage/database.js?v=7';
+import * as cache from './assets/assetCache.js?v=7';
+import { renderFrame, exportFrameBlob } from './editor/canvasEditor.js?v=7';
+import { AnimationPlayer } from './editor/animationPlayer.js?v=7';
+import { BG_MODES, migrateProject } from './editor/transforms.js?v=7';
+import { effectiveOrder, layerById } from './editor/layerModel.js?v=7';
+import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=7';
+import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=7';
+import { initPanels } from './ui/panels.js?v=7';
+import { initTimeline } from './ui/timeline.js?v=7';
+import { initMenus } from './ui/menus.js?v=7';
+import { initToolbox, setTool } from './ui/toolbox.js?v=7';
+import { initToolOptions } from './ui/toolOptions.js?v=7';
+import { initSpritePanel, syncSpritePanel } from './ui/spritePanel.js?v=7';
+import { initSpriteEditor } from './editor/spriteEditor.js?v=7';
+import { initPopover } from './ui/popover.js?v=7';
+import * as layers from './editor/drawingLayers.js?v=7';
+import { initDrawing, drawToolPreview, undoDrawing, redoDrawing, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=7';
+import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=7';
+import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=7';
 
 const stage = $('#stage'), sctx = stage.getContext('2d');
 const overlay = $('#overlay'), octx = overlay.getContext('2d');
@@ -45,6 +47,7 @@ function updateEditBar() {
   if (sig !== moveSig) { moveSig = sig; mv.replaceChildren(); for (const id of order) mv.append(new Option(layerById(p, id).name, id)); }
   mv.disabled = !o; if (o) mv.value = o.layer;
   $('#resetXf').disabled = !o; $('#delObj').disabled = !o;
+  syncSpritePanel();
 }
 
 function drawOverlayLayer() {
@@ -240,6 +243,7 @@ addEventListener('keydown', (e) => {
   const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
   if (mod && k === 's') { e.preventDefault(); commands.save(); return; }
   if (mod && k === 'o') { e.preventDefault(); commands.open(); return; }
+  if (document.body.classList.contains('editing')) return; // the sprite editor has its own keys
   if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || $('dialog[open]')) return;
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redoDrawing() : undoDrawing(); return; }
   if (mod && k === 'y') { e.preventDefault(); redoDrawing(); return; }
@@ -262,5 +266,5 @@ addEventListener('beforeunload', () => player.destroy());
 addEventListener('resize', () => { if (state.zoom) fit(); });
 
 state.project = newProject();
-initPanels(); initTimeline(); initToolbox(); initToolOptions(); initLayersPanel();
+initPanels(); initTimeline(); initToolbox(); initToolOptions(); initLayersPanel(); initSpritePanel(drawStage); initSpriteEditor();
 useProject(state.project);

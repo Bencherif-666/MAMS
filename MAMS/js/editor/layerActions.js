@@ -1,9 +1,9 @@
 // Adding, duplicating and deleting layers. Layers are containers: they hold sprites and a drawing.
-import { state, uid, currentFrame } from '../core/state.js?v=6';
-import { emit } from '../core/eventManager.js?v=6';
-import * as layers from './drawingLayers.js?v=6';
-import { effectiveOrder, setOrder } from './layerModel.js?v=6';
-import { confirmDialog, toast } from '../utils/helpers.js?v=6';
+import { state, uid, currentFrame } from '../core/state.js?v=7';
+import { emit } from '../core/eventManager.js?v=7';
+import * as layers from './drawingLayers.js?v=7';
+import { effectiveOrder, setOrder } from './layerModel.js?v=7';
+import { confirmDialog, toast } from '../utils/helpers.js?v=7';
 
 function place(id, aboveId) { // aboveId null = very top. The order is saved at the current frame (and continues forward).
   const p = state.project, o = effectiveOrder(p, state.current).filter((x) => x !== id);

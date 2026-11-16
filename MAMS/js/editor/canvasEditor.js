@@ -1,7 +1,7 @@
-import * as cache from '../assets/assetCache.js?v=6';
-import { canvasToBlob } from '../utils/helpers.js?v=6';
-import * as layers from './drawingLayers.js?v=6';
-import { effectiveOrder, layerById } from './layerModel.js?v=6';
+import * as cache from '../assets/assetCache.js?v=7';
+import { canvasToBlob } from '../utils/helpers.js?v=7';
+import * as layers from './drawingLayers.js?v=7';
+import { effectiveOrder, layerById } from './layerModel.js?v=7';
 
 let ghostCanvas = null; // one reusable offscreen buffer for onion skin tinting
 
@@ -9,6 +9,8 @@ export function drawObject(ctx, bmp, t) {
   ctx.save();
   ctx.translate(t.x + t.w / 2, t.y + t.h / 2);
   ctx.rotate((t.rot * Math.PI) / 180);
+  if (t.flipX) ctx.scale(-1, 1);                              // turned to look the other way
+  if (t.opacity != null && t.opacity < 1) ctx.globalAlpha *= t.opacity;
   ctx.drawImage(bmp, -t.w / 2, -t.h / 2, t.w, t.h);
   ctx.restore();
 }

@@ -1,12 +1,12 @@
 // Layers panel: a floating box beside the toolbox, opened by the vertical "Layers" button.
 // Rectangles run from top (in front) to bottom (behind). Click = select the layer, drag = reorder,
 // eye = hide, double-click the name = rename.
-import { state, currentFrame } from '../core/state.js?v=6';
-import { emit, on } from '../core/eventManager.js?v=6';
-import { drawLayerContent } from '../editor/canvasEditor.js?v=6';
-import { effectiveOrder, orderSource, layerById, setOrder } from '../editor/layerModel.js?v=6';
-import { addLayer, duplicateLayer, deleteLayer } from '../editor/layerActions.js?v=6';
-import { $, el } from '../utils/helpers.js?v=6';
+import { state, currentFrame } from '../core/state.js?v=7';
+import { emit, on } from '../core/eventManager.js?v=7';
+import { drawLayerContent } from '../editor/canvasEditor.js?v=7';
+import { effectiveOrder, orderSource, layerById, setOrder } from '../editor/layerModel.js?v=7';
+import { addLayer, duplicateLayer, deleteLayer } from '../editor/layerActions.js?v=7';
+import { $, el } from '../utils/helpers.js?v=7';
 
 const ICON = {
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',

@@ -1,5 +1,5 @@
 // Top menu bar. Each item: { label, key?, run, checked? } or '-' for a divider.
-import { $, el } from '../utils/helpers.js?v=6';
+import { $, el } from '../utils/helpers.js?v=7';
 
 export function initMenus(defs) {
   const bar = $('#menubar');
