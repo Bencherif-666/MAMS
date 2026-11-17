@@ -1,6 +1,6 @@
 // Placement of objects and upgrade of projects saved by older versions.
-import { upgradeLayers } from './layerModel.js?v=8';
-import { uid } from '../core/state.js?v=8';
+import { upgradeLayers } from './layerModel.js?v=9';
+import { uid } from '../core/state.js?v=9';
 
 export const BG_MODES = { auto: 'Auto', stretch: 'Stretch to canvas', original: 'Original size', cover: 'Cover' };
 const box = (w, h, x, y) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), rot: 0 });

@@ -1,12 +1,12 @@
 // Asset panel with folders. Clicking a sprite puts it on the SELECTED layer. Folders: breadcrumb, drag and drop, right-click menu.
-import { state } from '../core/state.js?v=8';
-import { on, emit } from '../core/eventManager.js?v=8';
-import { removeAsset, addBackground } from '../assets/assetLibrary.js?v=8';
-import * as cache from '../assets/assetCache.js?v=8';
-import * as F from '../assets/folderManager.js?v=8';
-import { addObject, replaceAsset, findObject } from '../editor/objects.js?v=8';
-import { openExtraction } from './extraction.js?v=8';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=8';
+import { state } from '../core/state.js?v=9';
+import { on, emit } from '../core/eventManager.js?v=9';
+import { removeAsset, addBackground } from '../assets/assetLibrary.js?v=9';
+import * as cache from '../assets/assetCache.js?v=9';
+import * as F from '../assets/folderManager.js?v=9';
+import { addObject, replaceAsset, findObject } from '../editor/objects.js?v=9';
+import { openExtraction } from './extraction.js?v=9';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=9';
 
 const KIND = { characters: 'character', abilities: 'ability', backgrounds: 'background' };
 const TITLE = { characters: 'Characters', abilities: 'Abilities', backgrounds: 'Backgrounds' };

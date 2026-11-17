@@ -1,13 +1,13 @@
 // Pixel sprite editor: a full page opened by the EDIT button. It works on a copy of the sprite's pixels;
 // nothing changes in the project until you press Done and choose "Save as new" or "Replace the original".
-import { state, uid } from '../core/state.js?v=8';
-import { emit } from '../core/eventManager.js?v=8';
-import * as cache from '../assets/assetCache.js?v=8';
-import { addAsset } from '../assets/assetLibrary.js?v=8';
-import { replaceAsset } from './objects.js?v=8';
-import { resizeTransform } from './selection.js?v=8';
-import * as P from './pixelOps.js?v=8';
-import { $, el, toast, canvasToBlob, confirmDialog } from '../utils/helpers.js?v=8';
+import { state, uid } from '../core/state.js?v=9';
+import { emit } from '../core/eventManager.js?v=9';
+import * as cache from '../assets/assetCache.js?v=9';
+import { addAsset } from '../assets/assetLibrary.js?v=9';
+import { replaceAsset } from './objects.js?v=9';
+import { resizeTransform } from './selection.js?v=9';
+import * as P from './pixelOps.js?v=9';
+import { $, el, toast, canvasToBlob, confirmDialog } from '../utils/helpers.js?v=9';
 
 const RAD = Math.PI / 180, HIST_LIMIT = 40;
 const prefs = { color: '#000000', size: 1, filled: false, grid: true, keepRatio: true, recent: [] };

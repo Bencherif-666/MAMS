@@ -65,3 +65,41 @@ Limitations: no pen-pressure; blur needs a browser with canvas filters (Chrome, 
 - **Undo / Redo** arrows sit in the top bar, centred. "Clear drawing" is in the Edit menu.
 - **Tool options** (color, size, opacity, hardness, shape) open in a small box beside the toolbox when you click a tool. Click the same tool again to hide it (values are kept). It also closes when you click outside it.
 - **ONION** (timeline bar): popup with on/off, previous, next, include drawings and opacity. **TRANSFORM** (timeline bar): selected-object info, background placement, reset.
+
+## Layers (Step 4)
+- **Layers** button (vertical, under the toolbox; key L) opens a panel that docks beside the toolbox. Rectangles run from top (in front) to bottom (behind). Drag a rectangle to change the order.
+- Layers: Background, Character, Ability and any number of **drawing layers** (+ Layer). Each has an eye (hide/show, also in playback and export) and a name (double-click). Drawing layers can be duplicated and deleted (at least one stays).
+- The **active drawing layer** (highlighted) is where Brush, Eraser, Ellipse and Blur paint. Clicking a sprite layer selects that object on the canvas.
+- **Order carries forward**: a reorder at frame N applies to frame N and the frames after it, until a later frame changes it again. Deleting or moving frames keeps every remaining frame's look.
+- Older projects are upgraded automatically (their single drawing becomes "Drawing 1").
+
+## Layers panel, version 5
+- The **Layers** button (vertical, in the right toolbox, key L) shows or hides a floating panel. The canvas keeps its full size.
+- The panel has **+ New layer** (the new layer goes in front, on top) and the layers below it, top = in front. A new project has only the **Default layer** (background, character, ability).
+- Drawing never goes on the default layer: the first stroke creates its own layer. Drag layers up or down to change what covers what.
+
+## If the app looks broken after an update
+Delete the whole old `MAMS` folder first, copy the new one in (keep the hidden `.htaccess` file), then press Ctrl+Shift+R. The title bar shows the version ("MAMS v5"); if it is missing, the browser is still using old files. In the browser's developer tools (F12 > Network) you can tick "Disable cache" while testing.
+
+## Layers are containers (version 6)
+- A layer holds **sprites** (characters, abilities, backgrounds, as many as you like) and a **drawing**. The drawing is in front of that layer's sprites.
+- The **selected layer** (highlighted) receives: assets you click in the asset panel, and brush / eraser / ellipse / blur strokes. Clicking an object on the canvas selects its layer. Clicking a layer's rectangle selects it.
+- The **Default layer** is an ordinary layer: hide, rename, reorder, delete it. A project always keeps at least one layer.
+- **Transform** popup: move the selected sprite to another layer, change a background's placement, reset, delete. **Alt+click** an asset replaces the selected sprite (same place and scale).
+- Old projects open with their background, character and ability together in the Default layer.
+
+## Sprite panel and pixel editor (version 7)
+- **Sprite panel**: click a sprite on the canvas and the asset list is replaced by that sprite's settings: opacity, width / height / rotation, keep proportions, quick Flip ⇄ (this frame only), layer, Delete, and the big **EDIT** button. "← Assets" (or Esc, or an asset tab) brings the asset list back.
+- **EDIT** opens a full-page pixel editor on a copy of the sprite: pencil, eraser, eyedropper (Alt+click), paint bucket, line, rectangle (outline or filled), color picker + HEX + recent colors, select a part (move, resize, rotate, delete), Flip ⇄ / ⇅ and Rotate 90° (selected part, or the whole sprite), undo/redo, zoom with pixel grid, canvas size. Everything is in whole pixels.
+- **Done** asks each time: **Save as new sprite** (original kept, this sprite switches to the new one) or **Replace the original** (changes every frame that uses it).
+
+## Undo for everything and asset folders (version 8)
+- **Undo / Redo** (Ctrl+Z, Ctrl+Y, the arrows in the top bar, Edit menu) now covers sprites (add, move, resize, rotate, opacity, flip, delete, replace), layers (add, delete, duplicate, rename, hide, reorder), frames (add, duplicate, delete, reorder, duration, FPS), assets, folders, the editor's "Replace original", brush strokes and "Clear frame". One timeline, last 100 steps. Undo jumps to the frame where the change happened.
+- Because of Undo, deleting a layer, a frame or an empty folder no longer asks "Are you sure?". Deleting a sprite from the library still asks.
+- **Folders** inside Characters, Abilities and Backgrounds: **+ Folder**, a clickable path (Characters › Goku › Running), click a folder to open it, rename by double-clicking its name. Move sprites (and folders) by dragging them onto a folder or onto a part of the path, or with the right-click menu "Move to folder". New imports land in the open folder.
+- Deleting a folder with sprites shows a warning window that lists them (and in how many frames each is used). Moving sprites between folders never changes your frames.
+
+## GetMugen and MyLibrary (version 9)
+- **GetMugen** (top menu): links to real external sites for free MUGEN sprites and stages (Mugen Free For All, Mugen Fighters Guild, The Spriters Resource, The MUGEN Archive). They are websites, not direct downloads; each opens in a new tab and is marked with an arrow icon.
+- **MyLibrary** (top menu): every project saved in this browser, newest first, with a preview of its first frame, modified and created dates and frame count. Buttons: Open, Rename, Duplicate, Delete; plus **+ New project** and **Back to workspace**. Opening or creating a project while the current one has unsaved changes saves the current one automatically first. A project is saved with File > Save (Ctrl+S); the preview is made at that moment.
+- Database version 2 adds a small "meta" store; projects saved by older versions keep working (they show "no preview" until saved again).

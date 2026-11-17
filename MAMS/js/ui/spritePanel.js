@@ -1,12 +1,12 @@
 // Sprite panel: replaces the asset list while an object is selected on the canvas.
-import { state } from '../core/state.js?v=8';
-import { emit } from '../core/eventManager.js?v=8';
-import * as cache from '../assets/assetCache.js?v=8';
-import { findObject, moveSelectedToLayer, deleteSelected } from '../editor/objects.js?v=8';
-import { clampBackground } from '../editor/transforms.js?v=8';
-import { effectiveOrder, layerById } from '../editor/layerModel.js?v=8';
-import { openEditor } from '../editor/spriteEditor.js?v=8';
-import { $ } from '../utils/helpers.js?v=8';
+import { state } from '../core/state.js?v=9';
+import { emit } from '../core/eventManager.js?v=9';
+import * as cache from '../assets/assetCache.js?v=9';
+import { findObject, moveSelectedToLayer, deleteSelected } from '../editor/objects.js?v=9';
+import { clampBackground } from '../editor/transforms.js?v=9';
+import { effectiveOrder, layerById } from '../editor/layerModel.js?v=9';
+import { openEditor } from '../editor/spriteEditor.js?v=9';
+import { $ } from '../utils/helpers.js?v=9';
 
 let layerSig = '';
 const setIfIdle = (id, v) => { const i = $(id); if (document.activeElement !== i) i.value = v; };

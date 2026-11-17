@@ -1,5 +1,5 @@
-import { blobToDataURL, dataURLToBlob } from '../utils/helpers.js?v=8';
-import { uid } from './state.js?v=8';
+import { blobToDataURL, dataURLToBlob } from '../utils/helpers.js?v=9';
+import { uid } from './state.js?v=9';
 
 /** Metadata as JSON; every asset PNG and every drawing layer PNG as a data URL. Call drawingLayers.flush() first. */
 export async function exportProject(project) {

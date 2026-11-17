@@ -1,9 +1,9 @@
-import { state, newFrame, uid, currentFrame } from '../core/state.js?v=8';
-import { on, emit } from '../core/eventManager.js?v=8';
-import { renderFrame } from '../editor/canvasEditor.js?v=8';
-import * as layers from '../editor/drawingLayers.js?v=8';
-import { snapshotOrders, restoreOrders } from '../editor/layerModel.js?v=8';
-import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=8';
+import { state, newFrame, uid, currentFrame } from '../core/state.js?v=9';
+import { on, emit } from '../core/eventManager.js?v=9';
+import { renderFrame } from '../editor/canvasEditor.js?v=9';
+import * as layers from '../editor/drawingLayers.js?v=9';
+import { snapshotOrders, restoreOrders } from '../editor/layerModel.js?v=9';
+import { $, el, toast, confirmDialog } from '../utils/helpers.js?v=9';
 
 const frames = () => state.project.frames;
 const defaultDuration = () => Math.round(1000 / state.project.fps);

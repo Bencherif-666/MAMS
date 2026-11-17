@@ -98,3 +98,8 @@ Delete the whole old `MAMS` folder first, copy the new one in (keep the hidden `
 - Because of Undo, deleting a layer, a frame or an empty folder no longer asks "Are you sure?". Deleting a sprite from the library still asks.
 - **Folders** inside Characters, Abilities and Backgrounds: **+ Folder**, a clickable path (Characters › Goku › Running), click a folder to open it, rename by double-clicking its name. Move sprites (and folders) by dragging them onto a folder or onto a part of the path, or with the right-click menu "Move to folder". New imports land in the open folder.
 - Deleting a folder with sprites shows a warning window that lists them (and in how many frames each is used). Moving sprites between folders never changes your frames.
+
+## GetMugen and MyLibrary (version 9)
+- **GetMugen** (top menu): links to real external sites for free MUGEN sprites and stages (Mugen Free For All, Mugen Fighters Guild, The Spriters Resource, The MUGEN Archive). They are websites, not direct downloads; each opens in a new tab and is marked with an arrow icon.
+- **MyLibrary** (top menu): every project saved in this browser, newest first, with a preview of its first frame, modified and created dates and frame count. Buttons: Open, Rename, Duplicate, Delete; plus **+ New project** and **Back to workspace**. Opening or creating a project while the current one has unsaved changes saves the current one automatically first. A project is saved with File > Save (Ctrl+S); the preview is made at that moment.
+- Database version 2 adds a small "meta" store; projects saved by older versions keep working (they show "no preview" until saved again).

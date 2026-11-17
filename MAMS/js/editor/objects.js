@@ -1,9 +1,9 @@
 // Objects (sprites) of the current frame: adding to the selected layer, replacing, moving between layers, resetting, deleting.
-import { state, uid, currentFrame } from '../core/state.js?v=8';
-import { emit } from '../core/eventManager.js?v=8';
-import { placeDefault } from './transforms.js?v=8';
-import { layerById } from './layerModel.js?v=8';
-import { toast } from '../utils/helpers.js?v=8';
+import { state, uid, currentFrame } from '../core/state.js?v=9';
+import { emit } from '../core/eventManager.js?v=9';
+import { placeDefault } from './transforms.js?v=9';
+import { layerById } from './layerModel.js?v=9';
+import { toast } from '../utils/helpers.js?v=9';
 
 export const findObject = (id) => (id ? currentFrame().objects.find((o) => o.id === id) || null : null);
 

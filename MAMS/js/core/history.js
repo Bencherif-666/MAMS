@@ -3,11 +3,11 @@
 //   app announces 'frames' or 'assets', the project is compared with the previous checkpoint and, if it changed,
 //   the previous state is pushed on the undo stack.
 // - Drawing strokes are recorded as pixel snapshots of one layer (pushDraw), in the same timeline.
-import { state } from './state.js?v=8';
-import { emit, on } from './eventManager.js?v=8';
-import * as cache from '../assets/assetCache.js?v=8';
-import * as layers from '../editor/drawingLayers.js?v=8';
-import { toast } from '../utils/helpers.js?v=8';
+import { state } from './state.js?v=9';
+import { emit, on } from './eventManager.js?v=9';
+import * as cache from '../assets/assetCache.js?v=9';
+import * as layers from '../editor/drawingLayers.js?v=9';
+import { toast } from '../utils/helpers.js?v=9';
 
 const LIMIT = 100, SIZE_CAP = 60e6;
 let undoStack = [], redoStack = [], last = null, restoring = false, queue = Promise.resolve(), groupSeq = 0, curGroup = null;
@@ -34,7 +34,7 @@ function trim() {
   let total = undoStack.reduce((s, e) => s + sizeOf(e), 0);
   while (total > SIZE_CAP && undoStack.length > 1) total -= sizeOf(undoStack.shift());
 }
-function push(entry) { undoStack.push(entry); redoStack.length = 0; trim(); emit('hist'); }
+function push(entry) { state.dirty = true; undoStack.push(entry); redoStack.length = 0; trim(); emit('hist'); }
 
 export const canUndo = () => undoStack.length > 0;
 export const canRedo = () => redoStack.length > 0;
@@ -99,7 +99,7 @@ async function step(from, to, what) {
   while (first.gid && from.length && from[from.length - 1].gid === first.gid) batch.push(from.pop());
   restoring = true;
   try { for (const e of batch) to.push(await apply(e)); } finally { restoring = false; }
-  last = snapshot();
+  last = snapshot(); state.dirty = true;
   emit('assets'); emit('frames'); emit('select'); emit('hist');
 }
 const enqueue = (fn) => (queue = queue.then(fn).catch((err) => { restoring = false; toast(`Undo failed: ${err.message}`, true); }));

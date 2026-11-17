@@ -1,6 +1,6 @@
 // Drawing layers: one stage-size canvas per (frame, layer), created lazily, saved as PNG blobs in frame.draws[layerId].
 // Canvases of deleted frames or layers are moved to a "graveyard" so that Undo can bring them back.
-import { canvasToBlob } from '../utils/helpers.js?v=8';
+import { canvasToBlob } from '../utils/helpers.js?v=9';
 
 const canvases = new Map(), graveyard = new Map(), dirty = new Set(), GRAVE_LIMIT = 80;
 let stageSize = { w: 640, h: 360 };

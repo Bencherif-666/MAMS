@@ -1,28 +1,30 @@
 // Entry point: wires modules together. Heavy logic lives in the modules.
-import { state, newProject, currentFrame, uid } from './core/state.js?v=8';
-import { on, emit } from './core/eventManager.js?v=8';
-import { exportProject, importProject } from './core/projectManager.js?v=8';
-import * as db from './storage/database.js?v=8';
-import * as cache from './assets/assetCache.js?v=8';
-import { renderFrame, exportFrameBlob } from './editor/canvasEditor.js?v=8';
-import { AnimationPlayer } from './editor/animationPlayer.js?v=8';
-import { BG_MODES, migrateProject } from './editor/transforms.js?v=8';
-import { effectiveOrder, layerById } from './editor/layerModel.js?v=8';
-import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=8';
-import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=8';
-import { initPanels } from './ui/panels.js?v=8';
-import { initTimeline } from './ui/timeline.js?v=8';
-import { initMenus } from './ui/menus.js?v=8';
-import { initToolbox, setTool } from './ui/toolbox.js?v=8';
-import { initToolOptions } from './ui/toolOptions.js?v=8';
-import { initSpritePanel, syncSpritePanel } from './ui/spritePanel.js?v=8';
-import { initSpriteEditor } from './editor/spriteEditor.js?v=8';
-import { initPopover } from './ui/popover.js?v=8';
-import * as layers from './editor/drawingLayers.js?v=8';
-import { initDrawing, drawToolPreview, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=8';
-import * as H from './core/history.js?v=8';
-import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=8';
-import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=8';
+import { state, newProject, currentFrame, uid } from './core/state.js?v=9';
+import { on, emit } from './core/eventManager.js?v=9';
+import { exportProject, importProject } from './core/projectManager.js?v=9';
+import * as db from './storage/database.js?v=9';
+import * as cache from './assets/assetCache.js?v=9';
+import { renderFrame, exportFrameBlob, thumbBlob } from './editor/canvasEditor.js?v=9';
+import { AnimationPlayer } from './editor/animationPlayer.js?v=9';
+import { BG_MODES, migrateProject } from './editor/transforms.js?v=9';
+import { effectiveOrder, layerById } from './editor/layerModel.js?v=9';
+import { findObject, deleteSelected, resetSelected, setBgMode, moveSelectedToLayer } from './editor/objects.js?v=9';
+import { initSelection, drawOverlay, OVERLAY_MARGIN as M } from './editor/selection.js?v=9';
+import { initPanels } from './ui/panels.js?v=9';
+import { initTimeline } from './ui/timeline.js?v=9';
+import { initMenus, closeMenus } from './ui/menus.js?v=9';
+import { buildLibrary, releaseLibraryUrls } from './ui/library.js?v=9';
+import { GETMUGEN_ITEMS } from './ui/getMugen.js?v=9';
+import { initToolbox, setTool } from './ui/toolbox.js?v=9';
+import { initToolOptions } from './ui/toolOptions.js?v=9';
+import { initSpritePanel, syncSpritePanel } from './ui/spritePanel.js?v=9';
+import { initSpriteEditor } from './editor/spriteEditor.js?v=9';
+import { initPopover } from './ui/popover.js?v=9';
+import * as layers from './editor/drawingLayers.js?v=9';
+import { initDrawing, drawToolPreview, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=9';
+import * as H from './core/history.js?v=9';
+import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=9';
+import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=9';
 
 const stage = $('#stage'), sctx = stage.getContext('2d');
 const overlay = $('#overlay'), octx = overlay.getContext('2d');
@@ -89,7 +91,7 @@ async function useProject(project) {
   await cache.loadAll(project);
   await layers.loadAll(project); // per-frame drawings
   Object.assign(state, { project, current: 0, sel: null, activeLayer: effectiveOrder(project, 0)[0] });
-  H.reset(); // a new project starts with an empty history
+  H.reset(); state.dirty = false; // a new project starts with an empty history
   stage.width = project.stage.w; stage.height = project.stage.h;
   overlay.width = project.stage.w + 2 * M; overlay.height = project.stage.h + 2 * M;
   $('#projName').value = project.name; $('#fps').value = project.fps;
@@ -107,13 +109,33 @@ on('pause', () => player.pause());
 const frameName = (i) => `${state.project.name}_frame_${String(i + 1).padStart(3, '0')}.png`;
 const toggleSide = (cls) => { document.body.classList.toggle(cls); requestAnimationFrame(fit); };
 const toggleOnion = () => { state.onion.on = !state.onion.on; drawStage(); };
+/** Saves the project with a preview picture of its first frame. */
+async function saveNow(auto) {
+  try {
+    await layers.flush(state.project);
+    state.project.created ??= Date.now();
+    const thumb = await thumbBlob(state.project, state.project.frames[0]).catch(() => null);
+    await db.saveProject(state.project, thumb);
+    state.dirty = false; toast(auto ? `"${state.project.name}" was saved automatically.` : 'Project saved.');
+    return true;
+  } catch (e) { toast(`Save failed: ${e.message}`, true); return false; }
+}
+const autosaveIfDirty = async () => { if (state.dirty) await saveNow(true); };
+async function openProjectById(id) {
+  if (state.project && id === state.project.id) return;
+  await autosaveIfDirty(); // changes of the current project are never lost
+  const p = await db.getProject(id);
+  if (!p) { toast('That project could not be found.', true); return; }
+  await useProject(p); toast(`Opened "${p.name}".`);
+}
+
 const commands = {
-  newProject: async () => { if (confirmDialog('Start a new project? Unsaved changes will be lost.')) await useProject(newProject()); },
-  save: async () => { try { await layers.flush(state.project); await db.saveProject(state.project); toast('Project saved.'); } catch (e) { toast(`Save failed: ${e.message}`, true); } },
+  newProject: async () => { await autosaveIfDirty(); await useProject(newProject()); },
+  save: () => saveNow(false),
   saveAs: async () => {
     const name = prompt('Save a copy as…', `${state.project.name} copy`);
     if (!name || !name.trim()) return;
-    state.project.id = uid('proj'); state.project.name = name.trim(); // new id: the original save is never overwritten
+    state.project.id = uid('proj'); state.project.name = name.trim(); state.project.created = Date.now(); // new id: the original save is never overwritten
     $('#projName').value = state.project.name;
     await commands.save();
   },
@@ -123,7 +145,7 @@ const commands = {
     if (!projects.length) list.append(el('div', 'hint', 'No saved projects yet. Use File → Save first.'));
     for (const p of projects) {
       const row = el('div', 'ex-ctl'), open = el('button', '', `${p.name} (${p.frames} frames)`), del = el('button', '', 'Delete');
-      open.onclick = async () => { await useProject(await db.getProject(p.id)); $('#projDlg').close(); };
+      open.onclick = async () => { $('#projDlg').close(); await openProjectById(p.id); };
       del.onclick = async () => { if (confirmDialog(`Delete saved project "${p.name}"?`)) { await db.deleteProject(p.id); row.remove(); } };
       row.append(open, del); list.append(row);
     }
@@ -196,6 +218,12 @@ $('#delObj').onclick = deleteSelected;
 $('#resetXf').onclick = resetSelected;
 
 // ---- menus
+const libraryActions = {
+  close: closeMenus,
+  open: async (id) => { closeMenus(); await openProjectById(id); },
+  create: async () => { closeMenus(); await commands.newProject(); },
+  renamedCurrent: (name) => { state.project.name = name; $('#projName').value = name; H.checkpoint(); },
+};
 const click = (id) => () => $(id).click();
 initMenus([
   { label: 'File', items: [
@@ -242,6 +270,8 @@ initMenus([
     { label: 'Previous frame', key: '←', run: click('#prev') },
     { label: 'Next frame', key: '→', run: click('#next') },
   ] },
+  { label: 'GetMugen', items: GETMUGEN_ITEMS },
+  { label: 'MyLibrary', panel: (pop) => buildLibrary(pop, libraryActions), onClose: releaseLibraryUrls },
 ]);
 
 // ---- keyboard shortcuts

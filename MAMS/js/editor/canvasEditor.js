@@ -1,7 +1,7 @@
-import * as cache from '../assets/assetCache.js?v=8';
-import { canvasToBlob } from '../utils/helpers.js?v=8';
-import * as layers from './drawingLayers.js?v=8';
-import { effectiveOrder, layerById } from './layerModel.js?v=8';
+import * as cache from '../assets/assetCache.js?v=9';
+import { canvasToBlob } from '../utils/helpers.js?v=9';
+import * as layers from './drawingLayers.js?v=9';
+import { effectiveOrder, layerById } from './layerModel.js?v=9';
 
 let ghostCanvas = null; // one reusable offscreen buffer for onion skin tinting
 
@@ -74,5 +74,14 @@ export function exportFrameBlob(project, frame) {
   const c = document.createElement('canvas');
   c.width = project.stage.w; c.height = project.stage.h;
   renderFrame(c.getContext('2d'), project, frame); // no onion, no handles; hidden layers stay hidden
+  return canvasToBlob(c);
+}
+
+/** Small preview picture of a frame (used by MyLibrary). */
+export function thumbBlob(project, frame, width = 192) {
+  const { w, h } = project.stage, c = document.createElement('canvas');
+  c.width = width; c.height = Math.max(1, Math.round(width * h / w));
+  const ctx = c.getContext('2d'); ctx.scale(c.width / w, c.height / h);
+  renderFrame(ctx, project, frame);
   return canvasToBlob(c);
 }

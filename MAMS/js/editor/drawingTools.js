@@ -1,11 +1,11 @@
 // Brush, eraser, ellipse and blur. They paint on the ACTIVE drawing layer of the current frame, never on sprites.
-import { state, currentFrame } from '../core/state.js?v=8';
-import { emit, on } from '../core/eventManager.js?v=8';
-import * as layers from './drawingLayers.js?v=8';
-import * as H from '../core/history.js?v=8';
-import { layerById } from './layerModel.js?v=8';
-import { OVERLAY_MARGIN as M } from './selection.js?v=8';
-import { toast } from '../utils/helpers.js?v=8';
+import { state, currentFrame } from '../core/state.js?v=9';
+import { emit, on } from '../core/eventManager.js?v=9';
+import * as layers from './drawingLayers.js?v=9';
+import * as H from '../core/history.js?v=9';
+import { layerById } from './layerModel.js?v=9';
+import { OVERLAY_MARGIN as M } from './selection.js?v=9';
+import { toast } from '../utils/helpers.js?v=9';
 
 export const settings = { color: '#ff5533', size: 12, opacity: 1, hardness: 80, fill: 'outline' };
 export const DRAW_TOOLS = ['brush', 'eraser', 'ellipse', 'blur'];

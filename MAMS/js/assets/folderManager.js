@@ -1,10 +1,10 @@
 // Asset folders. project.folders = [{ id, name, kind, parent }]; each asset has `folder` (null = top level of its category).
 // Folders are only for organising: moving a sprite never touches the frames that use it.
-import { state, uid } from '../core/state.js?v=8';
-import { emit } from '../core/eventManager.js?v=8';
-import * as cache from './assetCache.js?v=8';
-import { removeAsset } from './assetLibrary.js?v=8';
-import { $, el, toast } from '../utils/helpers.js?v=8';
+import { state, uid } from '../core/state.js?v=9';
+import { emit } from '../core/eventManager.js?v=9';
+import * as cache from './assetCache.js?v=9';
+import { removeAsset } from './assetLibrary.js?v=9';
+import { $, el, toast } from '../utils/helpers.js?v=9';
 
 const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
 const same = (a, b) => (a || null) === (b || null);
