@@ -218,3 +218,1094 @@ a.menu-item{color:inherit;text-decoration:none}
 .lib-actions{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:190px}
 .lib-actions button{padding:2px 8px}
 button.danger-text:hover:not(:disabled){border-color:var(--danger);color:var(--danger)}
+
+
+/* ==========================================================================
+   Sound Studio & Timeline Window (Dark-Blue, White, Grey with Light-Blue)
+   ========================================================================== */
+:root {
+  --snd-bg: #090e1a;
+  --snd-surface: #0f182c;
+  --snd-panel: #14213d;
+  --snd-card: #1b2c4e;
+  --snd-card-hover: #223762;
+  --snd-border: #2b3e68;
+  --snd-border-light: #3d568c;
+  --snd-text: #ffffff;
+  --snd-text-dim: #94a3b8;
+  --snd-text-muted: #64748b;
+  --snd-accent: #38bdf8;
+  --snd-accent-hover: #7dd3fc;
+  --snd-accent-glow: rgba(56, 189, 248, 0.35);
+  --snd-track-bg: #101a30;
+  --snd-clip-bg: #1e335a;
+  --snd-clip-border: #3b568c;
+  --snd-clip-sel: #38bdf8;
+}
+
+/* Open state for main layout adjustment */
+body.sound-window-open {
+  /* Keeps editor available while window is displayed */
+}
+
+/* Dedicated Sound Studio Window */
+.sound-window {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  top: 52px;
+  bottom: 20px;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  background: var(--snd-bg);
+  color: var(--snd-text);
+  border: 1px solid var(--snd-border);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(56, 189, 248, 0.15);
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sound-window.maximized {
+  left: 0;
+  right: 0;
+  top: 44px;
+  bottom: 0;
+  border-radius: 0;
+  border: 0;
+}
+
+.sound-window[hidden] {
+  display: none !important;
+}
+
+/* Sound Studio Header */
+.snd-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--snd-surface);
+  border-bottom: 1px solid var(--snd-border);
+  user-select: none;
+}
+
+.snd-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.snd-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--snd-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--snd-accent-glow));
+}
+
+.snd-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.snd-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  background: rgba(56, 189, 248, 0.18);
+  color: var(--snd-accent);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+}
+
+/* Transport Controls in Sound Window */
+.snd-transport {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding: 2px 8px;
+  background: var(--snd-panel);
+  border: 1px solid var(--snd-border);
+  border-radius: 6px;
+}
+
+.snd-tbtn {
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.snd-tbtn:hover {
+  background: var(--snd-card-hover);
+  border-color: var(--snd-accent);
+  color: var(--snd-accent);
+}
+
+.snd-time-disp {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--snd-accent);
+  padding: 0 8px;
+  min-width: 155px;
+  text-align: center;
+}
+
+.snd-frame-disp {
+  font-size: 11px;
+  color: var(--snd-text-dim);
+  padding-left: 6px;
+  border-left: 1px solid var(--snd-border);
+}
+
+/* Zoom Controls */
+.snd-zoom-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--snd-panel);
+  border: 1px solid var(--snd-border);
+  border-radius: 6px;
+}
+
+.snd-zoom-lbl {
+  font-size: 11px;
+  color: var(--snd-text-dim);
+  min-width: 62px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.snd-btn-sm {
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.snd-btn-sm:hover {
+  border-color: var(--snd-accent);
+  color: var(--snd-accent);
+}
+
+.snd-win-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.snd-btn-close:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Main Body Layout */
+.snd-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Section C: Sound Library
+   ========================================================================== */
+.snd-library-panel {
+  width: 290px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--snd-surface);
+  border-right: 1px solid var(--snd-border);
+  min-height: 0;
+}
+
+.snd-lib-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--snd-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.snd-lib-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.snd-lib-title-row h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+}
+
+.snd-btn-import {
+  background: var(--snd-accent);
+  border: 1px solid var(--snd-accent);
+  color: #081122;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.snd-btn-import:hover {
+  background: var(--snd-accent-hover);
+  box-shadow: 0 0 10px var(--snd-accent-glow);
+}
+
+.snd-lib-search-row input {
+  width: 100%;
+  background: #090e1a;
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.snd-lib-search-row input:focus {
+  border-color: var(--snd-accent);
+  outline: none;
+}
+
+.snd-lib-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.snd-lib-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--snd-text-dim);
+  font-size: 12px;
+}
+
+.snd-lib-empty .empty-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+
+.snd-lib-empty .empty-sub {
+  margin-top: 6px;
+  color: var(--snd-text-muted);
+  font-size: 11px;
+}
+
+.snd-lib-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  border-radius: 6px;
+  cursor: grab;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.snd-lib-card:hover {
+  background: var(--snd-card-hover);
+  border-color: var(--snd-border-light);
+  transform: translateY(-1px);
+}
+
+.snd-lib-card.dragging {
+  opacity: 0.4;
+}
+
+.snd-mini-wave {
+  width: 60px;
+  height: 24px;
+  flex: none;
+  background: #090e1a;
+  border-radius: 3px;
+  border: 1px solid var(--snd-border);
+}
+
+.snd-lib-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.snd-lib-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snd-lib-meta {
+  font-size: 11px;
+  color: var(--snd-text-dim);
+}
+
+.snd-lib-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+}
+
+.snd-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--snd-text-dim);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.snd-icon-btn:hover {
+  background: var(--snd-panel);
+  border-color: var(--snd-border);
+  color: var(--snd-accent);
+}
+
+.snd-lib-play.playing {
+  color: var(--snd-accent);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.snd-lib-hint {
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--snd-text-muted);
+  text-align: center;
+  border-top: 1px solid var(--snd-border);
+  background: #080d17;
+}
+
+/* ==========================================================================
+   Right Area: Track Headers + Timeline & Frames Scroll Container
+   ========================================================================== */
+.snd-right-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  background: var(--snd-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Track Header Labels (Sticky Left) */
+.snd-track-headers {
+  width: 84px;
+  flex: none;
+  background: var(--snd-surface);
+  border-right: 1px solid var(--snd-border);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  z-index: 5;
+}
+
+.snd-th-spacer-frames {
+  height: 98px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--snd-text-dim);
+  border-bottom: 1px solid var(--snd-border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.snd-th-spacer-ruler {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--snd-text-muted);
+  border-bottom: 1px solid var(--snd-border);
+  text-transform: uppercase;
+}
+
+.snd-th-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.snd-th-row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--snd-text-dim);
+  border-bottom: 1px solid var(--snd-border);
+}
+
+.snd-th-add-row {
+  padding: 6px;
+}
+
+.snd-btn-add-track {
+  width: 100%;
+  background: var(--snd-panel);
+  border: 1px dashed var(--snd-border);
+  color: var(--snd-text-dim);
+  font-size: 10px;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.snd-btn-add-track:hover {
+  border-color: var(--snd-accent);
+  color: var(--snd-accent);
+}
+
+/* Unified Scroll Wrap (Horizontal & Vertical) */
+.snd-scroll-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  position: relative;
+  background: #080d19;
+}
+
+/* ==========================================================================
+   Section A: Animation Frames Strip
+   ========================================================================== */
+.snd-frames-section {
+  height: 98px;
+  display: flex;
+  background: #0b1324;
+  border-bottom: 1px solid var(--snd-border);
+  position: relative;
+  user-select: none;
+}
+
+.snd-frame-thumb-box {
+  flex: none;
+  padding: 4px;
+  margin: 4px 2px;
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+
+.snd-frame-thumb-box:hover {
+  border-color: var(--snd-border-light);
+  background: var(--snd-card-hover);
+}
+
+.snd-frame-thumb-box.selected {
+  border-color: var(--snd-accent);
+  box-shadow: 0 0 10px var(--snd-accent-glow), inset 0 0 0 1px var(--snd-accent);
+  background: #192c50;
+}
+
+.snd-frame-canvas {
+  width: 100%;
+  height: 60px;
+  object-fit: contain;
+  background: conic-gradient(#1e293b 25%, #0f172a 0 50%, #1e293b 0 75%, #0f172a 0) 0 0 / 12px 12px;
+  border-radius: 3px;
+}
+
+.snd-frame-lbl {
+  font-size: 10px;
+  color: var(--snd-text-dim);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.snd-frame-thumb-box.selected .snd-frame-lbl {
+  color: var(--snd-accent);
+  font-weight: 700;
+}
+
+/* Time Ruler */
+.snd-ruler-section {
+  height: 26px;
+  background: #0d1628;
+  border-bottom: 1px solid var(--snd-border);
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.snd-ruler-tick {
+  position: absolute;
+  top: 16px;
+  width: 1px;
+  height: 10px;
+  background: var(--snd-border);
+}
+
+.snd-ruler-tick.major {
+  top: 8px;
+  height: 18px;
+  background: var(--snd-text-muted);
+}
+
+.snd-tick-label {
+  position: absolute;
+  top: -8px;
+  left: 3px;
+  font-size: 9px;
+  font-family: monospace;
+  color: var(--snd-text-dim);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Section B: Sound Timeline Tracks & Placed Rectangular Clips
+   ========================================================================== */
+.snd-timeline-tracks {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 200px;
+  background-image: linear-gradient(to right, rgba(43, 62, 104, 0.25) 1px, transparent 1px);
+  background-size: 50px 100%;
+}
+
+.snd-track-lane {
+  height: 52px;
+  border-bottom: 1px solid var(--snd-border);
+  position: relative;
+  background: var(--snd-track-bg);
+}
+
+.snd-track-lane:nth-child(even) {
+  background: #0d1629;
+}
+
+/* Placed Sound Clip */
+.snd-clip {
+  position: absolute;
+  top: 4px;
+  height: 44px;
+  background: linear-gradient(180deg, #1f355c 0%, #162644 100%);
+  border: 1px solid var(--snd-clip-border);
+  border-radius: 6px;
+  cursor: grab;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  user-select: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.snd-clip:hover {
+  border-color: var(--snd-accent);
+}
+
+.snd-clip.selected {
+  border-color: var(--snd-clip-sel);
+  box-shadow: 0 0 12px var(--snd-accent-glow), 0 0 0 1px var(--snd-clip-sel);
+  background: linear-gradient(180deg, #274578 0%, #1c3158 100%);
+}
+
+.snd-clip-wave {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.snd-clip-info {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+  margin-right: 18px;
+}
+
+.snd-clip-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.snd-clip-dur {
+  font-size: 9px;
+  color: var(--snd-accent-hover);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.snd-clip-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  color: var(--snd-text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.snd-clip-del:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Movable Vertical Playhead */
+.snd-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.snd-playhead-cap {
+  position: absolute;
+  top: 98px; /* Positioned directly on the ruler */
+  left: -24px;
+  width: 48px;
+  height: 24px;
+  background: var(--snd-accent);
+  color: #081122;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  cursor: ew-resize;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.snd-playhead-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--snd-accent);
+  box-shadow: 0 0 6px var(--snd-accent);
+  pointer-events: none;
+}
+
+/* Drop indicator on drag */
+.snd-drop-indicator {
+  position: absolute;
+  top: 98px;
+  bottom: 0;
+  width: 2px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  z-index: 25;
+  pointer-events: none;
+  font-size: 10px;
+  color: #38bdf8;
+  padding-left: 4px;
+  font-family: monospace;
+}
+
+/* ==========================================================================
+   Import Choice Dialog ("Do you want to edit this sound before importing?")
+   ========================================================================== */
+.sound-choice-dlg {
+  background: var(--snd-surface);
+  color: #ffffff;
+  border: 1px solid var(--snd-border);
+  border-radius: 10px;
+  padding: 20px;
+  width: 460px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--snd-border);
+}
+
+.dlg-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dlg-question {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--snd-accent);
+}
+
+.dlg-details {
+  font-size: 12px;
+  color: var(--snd-text-dim);
+  padding: 8px 10px;
+  background: #090e1a;
+  border-radius: 6px;
+  border: 1px solid var(--snd-border);
+  margin-bottom: 16px;
+}
+
+.dlg-actions-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-trim-yes {
+  background: var(--snd-accent);
+  border: 1px solid var(--snd-accent);
+  color: #081122;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-trim-yes:hover {
+  background: var(--snd-accent-hover);
+}
+
+.btn-trim-no {
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-trim-no:hover {
+  border-color: var(--snd-accent);
+}
+
+.btn-trim-cancel {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--snd-text-dim);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.btn-trim-cancel:hover {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   Audio Trimming Window (Handles, Waveform, Preview)
+   ========================================================================== */
+.sound-trim-dlg {
+  background: var(--snd-surface);
+  color: #ffffff;
+  border: 1px solid var(--snd-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  width: min(780px, 94vw);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--snd-border);
+}
+
+.trim-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.trim-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.trim-close-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--snd-text-dim);
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.trim-close-btn:hover {
+  color: #ffffff;
+  border-color: var(--snd-border);
+}
+
+.trim-wave-wrap {
+  width: 100%;
+  height: 140px;
+  background: #090e1a;
+  border: 1px solid var(--snd-border);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.trim-wave-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.trim-mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(5, 10, 20, 0.72);
+  pointer-events: none;
+}
+
+.trim-mask-left {
+  left: 0;
+}
+
+.trim-mask-right {
+  right: 0;
+}
+
+.trim-active-region {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-top: 1px solid var(--snd-accent);
+  border-bottom: 1px solid var(--snd-accent);
+  background: rgba(56, 189, 248, 0.08);
+  cursor: move;
+}
+
+.trim-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.handle-pill {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--snd-accent);
+  color: #081122;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.handle-line {
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  background: var(--snd-accent);
+  box-shadow: 0 0 6px var(--snd-accent);
+}
+
+.trim-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.trim-time-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--snd-text-dim);
+}
+
+.trim-lbl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trim-inp {
+  width: 72px;
+  background: #090e1a;
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.trim-inp:focus {
+  border-color: var(--snd-accent);
+  outline: none;
+}
+
+.trim-dur-info {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--snd-accent);
+}
+
+.trim-ctl-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--snd-border);
+  border-bottom: 1px solid var(--snd-border);
+  margin-bottom: 14px;
+}
+
+.trim-btn {
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.trim-btn:hover:not(:disabled) {
+  border-color: var(--snd-accent);
+  color: var(--snd-accent);
+}
+
+.trim-btn.preview-btn {
+  background: #193158;
+  border-color: var(--snd-accent);
+  color: var(--snd-accent);
+  font-weight: 600;
+}
+
+.trim-btn.preview-btn:hover {
+  background: var(--snd-accent);
+  color: #081122;
+}
+
+.trim-foot-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.trim-btn-confirm {
+  background: var(--snd-accent);
+  border: 1px solid var(--snd-accent);
+  color: #081122;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.trim-btn-confirm:hover {
+  background: var(--snd-accent-hover);
+  box-shadow: 0 0 10px var(--snd-accent-glow);
+}
+
+.trim-btn-cancel {
+  background: var(--snd-card);
+  border: 1px solid var(--snd-border);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.trim-btn-cancel:hover {
+  border-color: var(--snd-border-light);
+}
+
+/* Trigger buttons in main toolbar & timeline */
+.snd-trigger-btn {
+  background: var(--snd-panel) !important;
+  border-color: var(--snd-border-light) !important;
+  color: var(--snd-accent) !important;
+  font-weight: 600 !important;
+}
+
+.snd-trigger-btn:hover {
+  border-color: var(--snd-accent) !important;
+  box-shadow: 0 0 8px var(--snd-accent-glow);
+}

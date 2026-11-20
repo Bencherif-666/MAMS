@@ -19,11 +19,13 @@ function snapshot() {
   const p = state.project;
   const core = JSON.stringify({
     name: p.name, fps: p.fps, loop: p.loop, layers: p.layers, baseOrder: p.baseOrder, folders: p.folders || [],
+    sounds: p.sounds || [], soundAssets: Object.values(p.soundAssets || {}).map(({ blob, originalBlob, ...a }) => a),
     frames: p.frames.map(({ draws, ...f }) => f), assets: Object.values(p.assets).map(({ blob, ...a }) => a),
   });
   return {
     core, view: viewNow(),
     assets: Object.fromEntries(Object.entries(p.assets).map(([id, a]) => [id, { ...a }])), // blobs are shared, not copied
+    soundAssets: Object.fromEntries(Object.entries(p.soundAssets || {}).map(([id, a]) => [id, { ...a }])),
     draws: Object.fromEntries(p.frames.map((f) => [f.id, { ...f.draws }])),
   };
 }
@@ -64,6 +66,8 @@ async function restoreModel(snap) {
   const p = state.project, core = JSON.parse(snap.core);
   Object.assign(p, { name: core.name, fps: core.fps, loop: core.loop, layers: core.layers, baseOrder: core.baseOrder, folders: core.folders });
   p.assets = Object.fromEntries(Object.entries(snap.assets).map(([id, a]) => [id, { ...a }]));
+  p.soundAssets = Object.fromEntries(Object.entries(snap.soundAssets || {}).map(([id, a]) => [id, { ...a }]));
+  p.sounds = (core.sounds || []).map((s) => ({ ...s }));
   p.frames = core.frames.map((f) => ({ ...f, draws: { ...(snap.draws[f.id] || {}) } }));
   layers.reconcile(p);
   for (const id of cache.ids()) if (!p.assets[id]) cache.release(id);   // sprites that no longer exist
@@ -107,6 +111,6 @@ export const undo = () => enqueue(() => step(undoStack, redoStack, 'undo'));
 export const redo = () => enqueue(() => step(redoStack, undoStack, 'redo'));
 
 export function initHistory() {
-  on('frames', checkpoint); on('assets', checkpoint);
+  on('frames', checkpoint); on('assets', checkpoint); on('soundChange', checkpoint);
   on('stage', noteView); on('select', noteView);
 }

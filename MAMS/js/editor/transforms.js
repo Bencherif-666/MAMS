@@ -32,6 +32,8 @@ export function clampBackground(project, obj) {
 export function migrateProject(p) {
   upgradeLayers(p);
   p.folders ??= [];
+  p.sounds ??= [];
+  p.soundAssets ??= {};
   const sceneId = (p.layers.find((l) => l.id === 'scene') || p.layers[0]).id;
   for (const f of p.frames) {
     f.draws ??= {};

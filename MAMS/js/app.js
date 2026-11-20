@@ -24,6 +24,8 @@ import * as layers from './editor/drawingLayers.js?v=9';
 import { initDrawing, drawToolPreview, clearDrawing, getLiveStroke } from './editor/drawingTools.js?v=9';
 import * as H from './core/history.js?v=9';
 import { initLayersPanel, toggleLayersPanel } from './ui/layersPanel.js?v=9';
+import { openSoundWindow, toggleSoundWindow, isSoundWindowOpen, updatePlayheadPosition } from './ui/soundWindow.js?v=9';
+import { playTimelineSounds, stopAllPlayback, clearAudioCache } from './sound/soundEngine.js?v=9';
 import { $, el, toast, downloadBlob, confirmDialog } from './utils/helpers.js?v=9';
 
 const stage = $('#stage'), sctx = stage.getContext('2d');
@@ -34,7 +36,17 @@ const player = new AnimationPlayer({
   getIndex: () => state.current,
   isLooping: () => state.project.loop,
   onFrame: (i) => { state.current = i; emit('stage'); },
-  onStop: () => drawStage(), // bring back onion skin and handles when playback ends
+  onStart: (ms) => playTimelineSounds(ms, state.project.loop, player.totalDuration()),
+  onTick: (ms) => {
+    if (isSoundWindowOpen()) {
+      updatePlayheadPosition(ms);
+    }
+  },
+  onLoop: () => playTimelineSounds(0, state.project.loop, player.totalDuration()),
+  onStop: () => {
+    stopAllPlayback();
+    drawStage();
+  },
 });
 
 let moveSig = '';
@@ -86,7 +98,7 @@ function fit() {
 }
 
 async function useProject(project) {
-  player.pause(); cache.clear(); layers.clearAll();
+  player.pause(); cache.clear(); layers.clearAll(); clearAudioCache();
   migrateProject(project); // upgrades projects saved by older versions
   await cache.loadAll(project);
   await layers.loadAll(project); // per-frame drawings
@@ -96,7 +108,7 @@ async function useProject(project) {
   overlay.width = project.stage.w + 2 * M; overlay.height = project.stage.h + 2 * M;
   $('#projName').value = project.name; $('#fps').value = project.fps;
   $('#loop').classList.toggle('on', project.loop);
-  emit('assets'); emit('frames'); fit();
+  emit('assets'); emit('frames'); emit('soundChange'); fit();
 }
 
 on('stage', drawStage);
@@ -193,6 +205,9 @@ $('#zoomIn').onclick = () => setZoom(state.zoom * 1.25);
 $('#zoomOut').onclick = () => setZoom(state.zoom / 1.25);
 $('#fit').onclick = fit;
 $('#clearFrame').onclick = commands.clearFrame;
+$('#btnSoundStudio').onclick = () => openSoundWindow(player);
+$('#btnSoundTimeline').onclick = () => openSoundWindow(player);
+$('#btnSideSound').onclick = () => toggleSoundWindow(player);
 $('#projName').onchange = (e) => { state.project.name = e.target.value.trim() || 'Untitled'; H.checkpoint(); };
 $('#projClose').onclick = () => $('#projDlg').close();
 $('#jsonInput').onchange = async (e) => {
@@ -259,12 +274,16 @@ initMenus([
     { label: 'Onion Skin', key: 'O', checked: () => state.onion.on, run: toggleOnion },
     { label: 'Asset sidebar', checked: () => !document.body.classList.contains('no-left'), run: () => toggleSide('no-left') },
     { label: 'Toolbox', checked: () => !document.body.classList.contains('no-right'), run: () => toggleSide('no-right') },
+    '-',
+    { label: 'Sound Studio', key: 'Shift+S', checked: isSoundWindowOpen, run: () => toggleSoundWindow(player) },
   ] },
   { label: 'Animation', items: [
     { label: 'Play / Pause', key: 'Space', run: commands.togglePlay },
     { label: 'Stop', run: click('#stop') },
     { label: 'Loop', checked: () => state.project.loop, run: commands.toggleLoop },
     { label: 'Set FPS…', run: commands.setFps },
+    '-',
+    { label: 'Sound Studio…', key: 'S', run: () => openSoundWindow(player) },
     '-',
     { label: 'Add frame', run: click('#addFrame') },
     { label: 'Previous frame', key: '←', run: click('#prev') },
@@ -293,6 +312,7 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { state.sel = null; emit('select'); drawStage(); }
   if (k === 'o') toggleOnion();
   if (k === 'l') toggleLayersPanel();
+  if (k === 's') { e.preventDefault(); toggleSoundWindow(player); return; }
   if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
 });
 

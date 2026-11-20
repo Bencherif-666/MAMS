@@ -24,6 +24,7 @@ export function newProject(name = 'Untitled') {
   return {
     id: uid('proj'), version: 5, created: Date.now(), name, fps: 12, loop: true, stage: { w: 640, h: 360 }, assets: {}, folders: [],
     layers: defaultLayers(), baseOrder: defaultOrder(), frames: [newFrame()],
+    sounds: [], soundAssets: {},
   };
 }
 

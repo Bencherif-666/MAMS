@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mugen Animation Maker Studio</title>
-<link rel="stylesheet" href="css/main.css?v=9">
+<link rel="stylesheet" href="css/main.css?v=10">
 </head>
 <body>
 <header id="top">
-  <strong class="brand" title="Version 9: GetMugen and MyLibrary menus">MAMS <small>v9</small></strong>
+  <strong class="brand" title="Version 10: Sound Timeline Studio">MAMS <small>v10</small></strong>
   <nav id="menubar" aria-label="Main menu"></nav>
   <div id="histBtns">
     <button id="btnUndo" title="Undo drawing (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -22,6 +22,7 @@
   <button data-tab="characters" title="Characters"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-5 3.5-8 8-8s8 3 8 8z"/></svg></button>
   <button data-tab="abilities" title="Abilities"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
   <button data-tab="backgrounds" title="Backgrounds"><svg viewBox="0 0 24 24"><path d="M3 4h18v16H3zM5 18l5-6 3 4 2-2 4 4z"/></svg></button>
+  <button id="btnSideSound" title="Sound Studio (S)"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
 </nav>
 
 <aside id="panel">
@@ -63,6 +64,7 @@
     <button id="zoomIn" title="Zoom in">+</button>
     <button id="fit" title="Fit to screen">Fit</button>
     <button id="clearFrame" title="Remove everything from this frame">Clear frame</button>
+    <button id="btnSoundStudio" title="Open Sound Studio (S)" class="snd-trigger-btn">🎵 Sound Studio</button>
   </div>
   <div id="stageWrap"><div id="stageBox"><canvas id="stage" width="640" height="360"></canvas><canvas id="overlay"></canvas></div></div>
   <div id="timeline">
@@ -93,6 +95,7 @@
         </div>
       </div>
       <label>Duration <input id="dur" type="number" min="10" max="10000" step="10"> ms</label>
+      <button id="btnSoundTimeline" title="Open Sound Timeline (S)" class="snd-trigger-btn">🎵 Sound</button>
       <span class="hint">Drag frames to reorder</span>
     </div>
     <div id="strip"></div>
@@ -200,6 +203,6 @@
 <div id="toast"></div>
 <input type="file" id="fileInput" accept="image/png" hidden>
 <input type="file" id="jsonInput" accept=".json,application/json" hidden>
-<script type="module" src="js/app.js?v=9"></script>
+<script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>
