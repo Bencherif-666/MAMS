@@ -68,12 +68,26 @@ export function stopAllPlayback() {
 /** Stop any ongoing library or trim preview. */
 export function stopPreview() {
   if (currentPreview) {
-    try {
-      currentPreview.source.stop();
-      currentPreview.source.disconnect();
-    } catch (_) {}
-    if (currentPreview.onEnd) currentPreview.onEnd();
+    const prev = currentPreview;
     currentPreview = null;
+    if (typeof prev.stop === 'function') {
+      try {
+        prev.stop();
+      } catch (_) {}
+    } else {
+      try {
+        if (prev.source) {
+          prev.source.onended = null;
+          prev.source.stop();
+          prev.source.disconnect();
+        }
+      } catch (_) {}
+      if (prev.onEnd) {
+        try {
+          prev.onEnd();
+        } catch (_) {}
+      }
+    }
   }
 }
 
@@ -141,7 +155,9 @@ export async function previewAudio(assetOrBuffer, { startSec = 0, durationSec = 
   stopPreview();
   const ctx = getAudioContext();
   if (!ctx) return null;
-  if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
+  if (ctx.state === 'suspended') {
+    await ctx.resume().catch(() => {});
+  }
 
   let buffer = null;
   if (assetOrBuffer instanceof AudioBuffer) {
@@ -149,36 +165,56 @@ export async function previewAudio(assetOrBuffer, { startSec = 0, durationSec = 
   } else {
     buffer = await getAssetAudioBuffer(assetOrBuffer);
   }
-  if (!buffer) return null;
+  if (!buffer || buffer.duration <= 0) return null;
+
+  const actualStart = Math.max(0, Math.min(buffer.duration - 0.001, startSec));
+  const remaining = Math.max(0, buffer.duration - actualStart);
+  const playDur = durationSec != null ? Math.min(durationSec, remaining) : remaining;
+  if (playDur <= 0.001) return null;
 
   const source = ctx.createBufferSource();
   source.buffer = buffer;
   source.connect(ctx.destination);
 
-  const previewObj = { source, onEnd };
-  currentPreview = previewObj;
+  let isEnded = false;
+  const finish = (triggerOnEnd = true) => {
+    if (isEnded) return;
+    isEnded = true;
 
-  source.onended = () => {
-    if (currentPreview === previewObj) {
+    try {
+      source.onended = null;
+      source.stop();
+      source.disconnect();
+    } catch (_) {}
+
+    if (currentPreview === controller) {
       currentPreview = null;
     }
-    if (onEnd) onEnd();
+
+    if (triggerOnEnd && onEnd) {
+      try {
+        onEnd();
+      } catch (err) {
+        console.error('Error in preview onEnd callback:', err);
+      }
+    }
   };
 
-  const actualStart = Math.max(0, Math.min(buffer.duration, startSec));
-  if (durationSec != null && durationSec > 0) {
-    source.start(0, actualStart, durationSec);
+  const controller = {
+    source,
+    stop: () => finish(true),
+  };
+  currentPreview = controller;
+
+  source.onended = () => finish(true);
+
+  if (durationSec != null) {
+    source.start(0, actualStart, playDur);
   } else {
     source.start(0, actualStart);
   }
 
-  return {
-    stop: () => {
-      try { source.stop(); } catch (_) {}
-      if (currentPreview === previewObj) currentPreview = null;
-      if (onEnd) onEnd();
-    }
-  };
+  return controller;
 }
 
 /**
